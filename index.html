@@ -26,13 +26,13 @@
             width: 100%;
             height: 100%;
             display: none;
-            position: absolute; /* 全画面をオーバーレイ可能にするため */
+            position: absolute;
             top: 0;
             left: 0;
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            background-color: #87CEEB; /* デフォルト背景 */
+            background-color: #87CEEB;
         }
 
         .screen.active {
@@ -65,9 +65,18 @@
             box-shadow: 0 6px 0 #000;
             transition: transform 0.1s, box-shadow 0.1s;
             text-align: center;
+            background-color: #FFF;
         }
         
         .btn:active {
+            transform: translateY(6px);
+            box-shadow: 0 0 0 #000;
+        }
+        
+        .btn:disabled {
+            background-color: #BDC3C7 !important;
+            color: #7F8C8D !important;
+            cursor: not-allowed;
             transform: translateY(6px);
             box-shadow: 0 0 0 #000;
         }
@@ -213,6 +222,9 @@
             border-bottom: 4px solid #000;
             margin-bottom: 15px;
             padding-bottom: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
         .equipped-area {
@@ -252,40 +264,60 @@
         }
 
         .chara-card {
-            width: 100px;
-            height: 130px;
+            width: 110px;
+            height: 140px;
             border: 4px solid #000;
             border-radius: 8px;
             display: flex;
             flex-direction: column;
             align-items: center;
+            justify-content: space-between;
             padding: 5px;
             box-shadow: 0 4px 0 #000;
             cursor: pointer;
             box-sizing: border-box;
+            position: relative;
         }
         
         .chara-card img {
             width: 60px;
             height: 60px;
             object-fit: contain;
-            margin-bottom: 5px;
+            margin-top: 5px;
         }
 
         .chara-card .chara-name {
-            font-size: 14px;
+            font-size: 13px;
             text-align: center;
             word-break: break-all;
-            background: rgba(255, 255, 255, 0.7);
+            background: rgba(255, 255, 255, 0.9);
             border-radius: 4px;
             padding: 2px 4px;
             width: 100%;
             box-sizing: border-box;
+            border: 2px solid #000;
+        }
+        
+        .chara-card .equip-status {
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            background-color: #E74C3C;
+            color: #FFF;
+            border: 2px solid #000;
+            border-radius: 12px;
+            padding: 2px 8px;
+            font-size: 12px;
+            font-weight: bold;
+            display: none;
+        }
+        .chara-card.is-equipped .equip-status {
+            display: block;
         }
 
         .chara-slot {
-            min-width: 100px;
-            height: 130px;
+            min-width: 110px;
+            height: 140px;
             background-color: rgba(0,0,0,0.1);
             border: 4px dashed #000;
             border-radius: 8px;
@@ -302,12 +334,12 @@
 
         /* バトル画面のスタイル */
         #screen-battle {
-            justify-content: flex-start; /* 上から下へ配置 */
+            justify-content: flex-start;
         }
 
         .battle-top-area {
             width: 100%;
-            height: 15%;
+            height: 25%;
             background-color: #FFF;
             border-bottom: 6px solid #000;
             display: flex;
@@ -319,11 +351,11 @@
 
         .battle-field-area {
             width: 100%;
-            height: 65%;
+            height: 55%;
             position: relative;
             display: flex;
             justify-content: space-between;
-            align-items: flex-end; /* キャラクターを地面側に寄せる */
+            align-items: flex-end;
             padding-bottom: 20px;
             box-sizing: border-box;
             z-index: 5;
@@ -332,7 +364,7 @@
         .battle-ground-area {
             width: 100%;
             height: 20%;
-            background-color: #8B4513; /* 土の色 */
+            background-color: #8B4513;
             border-top: 6px solid #000;
             z-index: 10;
         }
@@ -341,27 +373,113 @@
             display: flex;
             gap: 15px;
             padding: 0 40px;
+            align-items: flex-end;
         }
 
-        /* バトル用キャラクターアイコン */
+        /* 敵チームは左側。画像反転はimgタグに適用 */
+        #battle-enemy-team {
+            justify-content: flex-start;
+        }
+        #battle-player-team {
+            justify-content: flex-end;
+        }
+
+        /* バトル用キャラクターアイコン（背景・枠線なし） */
         .battle-chara {
             width: 80px;
-            height: 80px;
-            border: 4px solid #000;
-            border-radius: 8px;
             display: flex;
-            justify-content: center;
+            flex-direction: column;
             align-items: center;
-            box-shadow: 0 4px 0 #000;
+            position: relative;
+            transition: transform 0.3s ease-in-out;
         }
 
         .battle-chara img {
-            width: 60px;
-            height: 60px;
+            width: 80px;
+            height: 80px;
             object-fit: contain;
+            /* 背景や枠線を消す */
+            background: transparent;
+            border: none;
+            box-shadow: none;
         }
 
-        /* モーダル用（設定・詳細・メッセージ） */
+        /* 敵の画像を左右反転 */
+        #battle-enemy-team .battle-chara img {
+            transform: scaleX(-1);
+        }
+
+        /* バトル中のステータス表示 */
+        .battle-stats {
+            background-color: rgba(255, 255, 255, 0.9);
+            border: 3px solid #000;
+            border-radius: 8px;
+            padding: 4px 8px;
+            font-size: 16px;
+            font-weight: bold;
+            margin-top: 5px;
+            text-align: center;
+            white-space: nowrap;
+        }
+        
+        .battle-status-effect {
+            position: absolute;
+            top: -15px;
+            background-color: #9B59B6;
+            color: #FFF;
+            border: 2px solid #000;
+            border-radius: 4px;
+            padding: 2px 4px;
+            font-size: 12px;
+            display: none;
+        }
+
+        /* タイピングエリア UI */
+        #typing-jp {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+        #typing-en {
+            font-size: 40px;
+            letter-spacing: 2px;
+        }
+        .typed {
+            color: #E74C3C;
+        }
+        .untyped {
+            color: #BDC3C7;
+        }
+        #perfect-bonus-display {
+            color: #E74C3C;
+            font-size: 20px;
+            margin-bottom: 5px;
+            height: 24px;
+        }
+
+        /* アニメーション用クラス */
+        .attack-move-right {
+            transform: translateX(150px) translateY(-20px) scale(1.1);
+        }
+        .attack-move-left {
+            transform: translateX(-150px) translateY(-20px) scale(1.1);
+        }
+        .damage-shake {
+            animation: shake 0.3s;
+        }
+        .fainted {
+            opacity: 0.3;
+            filter: grayscale(100%);
+        }
+
+        @keyframes shake {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            50% { transform: translateX(10px); }
+            75% { transform: translateX(-10px); }
+            100% { transform: translateX(0); }
+        }
+
+        /* モーダル用 */
         .modal-overlay {
             position: fixed;
             top: 0; left: 0; width: 100vw; height: 100vh;
@@ -394,6 +512,14 @@
             padding: 15px;
             border: 4px solid #000;
             border-radius: 8px;
+        }
+
+        /* 報酬選択用グリッド */
+        .reward-grid {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 15px;
         }
     </style>
 </head>
@@ -442,19 +568,23 @@
 
     <!-- バトル画面 -->
     <div id="screen-battle" class="screen">
-        <!-- タイピングスペース確保部分（システムは今後実装） -->
-        <div class="battle-top-area">
-            <h2 style="margin: 0; padding-bottom: 5px;">タイピングエリア (準備中)</h2>
-            <input type="text" class="custom-input" placeholder="タイピング入力..." disabled style="margin-bottom: 0;">
+        <!-- タイピングスペース -->
+        <div class="battle-top-area" id="typing-area">
+            <div id="perfect-bonus-display"></div>
+            <div id="typing-jp"></div>
+            <div id="typing-en">
+                <span id="type-typed" class="typed"></span><span id="type-untyped" class="untyped"></span>
+            </div>
+            <div id="battle-message" style="font-size:24px; margin-top:10px; display:none;"></div>
         </div>
         
         <!-- 戦闘フィールド -->
         <div class="battle-field-area">
             <div class="team-container" id="battle-enemy-team">
-                <!-- 敵キャラがここに生成されます -->
+                <!-- 敵キャラ生成 -->
             </div>
             <div class="team-container" id="battle-player-team">
-                <!-- 自分のキャラがここに生成されます -->
+                <!-- 味方キャラ生成 -->
             </div>
         </div>
         
@@ -469,34 +599,78 @@
             
             <a name="Chara" id="Chara"></a> <!-- Chara Anchor Tool -->
             
-            <div class="section-title">装備しているキャラ (最大4体)</div>
+            <div class="section-title">
+                <span>装備しているキャラ (最大4体)</span>
+                <span style="font-size: 16px; color: #555;">タップして外す</span>
+            </div>
             <div class="equipped-area" id="equipped-list">
-                <!-- Javascriptでスロットを生成します -->
+                <!-- スロット生成 -->
             </div>
 
             <div class="owned-area">
-                <div class="section-title">持っているスライム</div>
+                <div class="section-title">
+                    <span>持っているスライム</span>
+                    <span style="font-size: 16px; color: #555;">タップして装備 (同キャラ最大2体)</span>
+                </div>
                 <input type="text" id="search-slime" class="search-bar" placeholder="名前を検索してスライムを探す...">
                 <div class="character-grid" id="owned-list">
-                    <!-- Javascriptでキャラ一覧を生成します -->
+                    <!-- キャラ一覧生成 -->
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- 設定モーダル（名前変更） -->
+    <!-- 設定モーダル -->
     <div id="modal-settings" class="modal-overlay">
         <div class="modal-content" style="min-width: 300px;">
-            <h2 style="margin-top: 0;">名前の変更</h2>
+            <h2 style="margin-top: 0;">設定</h2>
             <input type="text" id="settings-name-input" class="custom-input" placeholder="新しい名前 (3〜12文字)" maxlength="12" style="width: 90%; margin: 0 auto 15px auto;">
-            <div style="display: flex; gap: 15px; justify-content: center;">
-                <button class="btn btn-red" id="btn-close-settings" style="padding: 10px 20px; font-size: 18px;">キャンセル</button>
-                <button class="btn btn-yellow" id="btn-update-name" style="padding: 10px 20px; font-size: 18px;">変更する</button>
+            <div style="display: flex; gap: 15px; justify-content: center; margin-bottom: 20px;">
+                <button class="btn btn-red" id="btn-close-settings" style="padding: 10px 20px; font-size: 18px;">閉じる</button>
+                <button class="btn btn-yellow" id="btn-update-name" style="padding: 10px 20px; font-size: 18px;">名前を変更</button>
+            </div>
+            <div style="border-top: 4px dashed #000; padding-top: 20px;">
+                <button class="btn btn-red" id="btn-init-start" style="padding: 10px 20px; font-size: 18px; width: 100%;">初期化 (データ削除)</button>
             </div>
         </div>
     </div>
 
-    <!-- キャラクター詳細モーダル -->
+    <!-- 初期化確認：ステップ1 -->
+    <div id="modal-reset-step1" class="modal-overlay">
+        <div class="modal-content">
+            <h2 style="color: #E74C3C;">警告</h2>
+            <h3>本当にデータを消しますか？<br>（この操作は取り消せません）</h3>
+            <div style="display: flex; gap: 15px; justify-content: center;">
+                <button class="btn btn-blue" id="btn-reset-cancel1">いいえ</button>
+                <button class="btn btn-red" id="btn-reset-yes1">はい</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 初期化確認：ステップ2 (待機) -->
+    <div id="modal-reset-step2" class="modal-overlay">
+        <div class="modal-content">
+            <h2 style="color: #E74C3C;">最終確認準備</h2>
+            <h3>10秒間待ってください。</h3>
+            <h1 id="reset-countdown-text" style="font-size: 48px; margin: 10px 0;">10</h1>
+            <button class="btn btn-red" id="btn-reset-next2" disabled>次へ進む</button>
+        </div>
+    </div>
+
+    <!-- 初期化確認：ステップ3 (入力) -->
+    <div id="modal-reset-step3" class="modal-overlay">
+        <div class="modal-content">
+            <h2 style="color: #E74C3C;">最終確認</h2>
+            <h3>削除を確定するには、現在の名前<br>「<span id="reset-target-name"></span>」を入力してください。</h3>
+            <input type="text" id="reset-name-input" class="custom-input" placeholder="名前を入力">
+            <div style="display: flex; gap: 15px; justify-content: center;">
+                <button class="btn btn-blue" id="btn-reset-cancel3">キャンセル</button>
+                <button class="btn btn-red" id="btn-reset-execute">データを初期化する</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- キャラクター詳細モーダル（装備画面用） -->
     <div id="modal-chara-detail" class="modal-overlay">
         <div class="modal-content" style="width: 80%; max-width: 400px;">
             <h2 id="detail-name" style="margin-top: 0; font-size: 28px;">名前</h2>
@@ -511,8 +685,26 @@
                     <span id="detail-ability" style="display: inline-block; margin-top: 5px;"></span>
                 </div>
             </div>
-
             <button class="btn btn-red" id="btn-close-detail">閉じる</button>
+        </div>
+    </div>
+
+    <!-- 勝利報酬選択モーダル -->
+    <div id="modal-reward" class="modal-overlay">
+        <div class="modal-content" style="width: 90%; max-width: 600px;">
+            <h2>勝利！好きなスライムを1体選んでね</h2>
+            <div class="reward-grid" id="reward-grid-container">
+                <!-- 敵チームのキャラ一覧が生成されます -->
+            </div>
+        </div>
+    </div>
+
+    <!-- 敗北モーダル -->
+    <div id="modal-lose" class="modal-overlay">
+        <div class="modal-content">
+            <h2 style="color: #3498DB;">敗北...</h2>
+            <h3>ペナルティはありません。<br>次は勝てるように頑張ろう！</h3>
+            <button class="btn btn-yellow" id="btn-close-lose">ホームに戻る</button>
         </div>
     </div>
 
