@@ -5,13 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>バトルスライム</title>
     <style>
-        /* 全体の基本設定（ブロスタ風・提供画像風のポップで太い枠線のUI） */
+        /* 全体の基本設定（ブロスタ風・ポップで太い枠線のUI） */
         body {
             margin: 0;
             padding: 0;
             width: 100vw;
             height: 100vh;
-            background-color: #87CEEB; /* 画像の水色背景 */
+            background-color: #87CEEB;
             font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
             font-weight: 900;
             overflow: hidden;
@@ -26,14 +26,31 @@
             width: 100%;
             height: 100%;
             display: none;
-            position: relative;
+            position: absolute; /* 全画面をオーバーレイ可能にするため */
+            top: 0;
+            left: 0;
             flex-direction: column;
             justify-content: center;
             align-items: center;
+            background-color: #87CEEB; /* デフォルト背景 */
         }
 
         .screen.active {
             display: flex;
+        }
+
+        /* マッチメイキング画面専用設定 */
+        #screen-matchmaking {
+            background-color: #000;
+            color: #FFF;
+            z-index: 50;
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+        }
+
+        #screen-matchmaking h1 {
+            font-size: 40px;
+            text-shadow: 2px 2px 0 #333;
         }
 
         /* 汎用ボタン（太枠・シャドウ付き） */
@@ -59,6 +76,7 @@
         .btn-blue { background-color: #3498DB; color: #FFF; text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; }
         .btn-green { background-color: #2ECC71; }
         .btn-red { background-color: #E74C3C; color: #FFF; }
+        .btn-purple { background-color: #9B59B6; color: #FFF; text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; }
 
         /* 名前入力画面のスタイル */
         #name-input-container {
@@ -75,7 +93,7 @@
             font-size: 20px;
         }
 
-        #player-name-input {
+        #player-name-input, .custom-input {
             border: 4px solid #000;
             border-radius: 6px;
             padding: 10px;
@@ -97,6 +115,7 @@
             justify-content: space-between;
             padding: 15px;
             box-sizing: border-box;
+            z-index: 10;
         }
 
         .money-display {
@@ -133,13 +152,44 @@
             flex-direction: column;
             gap: 20px;
             width: 300px;
+            z-index: 1;
+        }
+
+        /* プレイモード画面（全画面）のスタイル */
+        .play-mode-container {
+            display: flex;
+            gap: 40px;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .mode-btn {
+            width: 350px;
+            height: 450px;
+            font-size: 40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 20px;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .mode-title {
+            font-size: 48px;
+            margin-bottom: 30px;
+            color: #FFF;
+            text-shadow: -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000;
         }
 
         /* 装備画面のスタイル */
         .equip-container {
             width: 90%;
             height: 90%;
-            background-color: #A9DFBF; /* 画像の緑フィールド */
+            background-color: #A9DFBF;
             border: 6px solid #000;
             border-radius: 16px;
             display: flex;
@@ -151,10 +201,11 @@
 
         .close-btn {
             position: absolute;
-            top: 10px;
-            right: 10px;
-            padding: 5px 15px;
-            font-size: 16px;
+            top: 20px;
+            right: 20px;
+            padding: 10px 20px;
+            font-size: 18px;
+            z-index: 10;
         }
 
         .section-title {
@@ -203,7 +254,6 @@
         .chara-card {
             width: 100px;
             height: 130px;
-            background-color: #FFF;
             border: 4px solid #000;
             border-radius: 8px;
             display: flex;
@@ -212,6 +262,7 @@
             padding: 5px;
             box-shadow: 0 4px 0 #000;
             cursor: pointer;
+            box-sizing: border-box;
         }
         
         .chara-card img {
@@ -225,6 +276,11 @@
             font-size: 14px;
             text-align: center;
             word-break: break-all;
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 4px;
+            padding: 2px 4px;
+            width: 100%;
+            box-sizing: border-box;
         }
 
         .chara-slot {
@@ -240,7 +296,72 @@
             color: #333;
         }
 
-        /* モーダル用 */
+        /* レアリティカラー設定 */
+        .rarity-common { background-color: #BDC3C7; } /* 灰色 */
+        .rarity-uncommon { background-color: #2ECC71; } /* 緑色 */
+
+        /* バトル画面のスタイル */
+        #screen-battle {
+            justify-content: flex-start; /* 上から下へ配置 */
+        }
+
+        .battle-top-area {
+            width: 100%;
+            height: 15%;
+            background-color: #FFF;
+            border-bottom: 6px solid #000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+        }
+
+        .battle-field-area {
+            width: 100%;
+            height: 65%;
+            position: relative;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end; /* キャラクターを地面側に寄せる */
+            padding-bottom: 20px;
+            box-sizing: border-box;
+            z-index: 5;
+        }
+
+        .battle-ground-area {
+            width: 100%;
+            height: 20%;
+            background-color: #8B4513; /* 土の色 */
+            border-top: 6px solid #000;
+            z-index: 10;
+        }
+
+        .team-container {
+            display: flex;
+            gap: 15px;
+            padding: 0 40px;
+        }
+
+        /* バトル用キャラクターアイコン */
+        .battle-chara {
+            width: 80px;
+            height: 80px;
+            border: 4px solid #000;
+            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 4px 0 #000;
+        }
+
+        .battle-chara img {
+            width: 60px;
+            height: 60px;
+            object-fit: contain;
+        }
+
+        /* モーダル用（設定・詳細・メッセージ） */
         .modal-overlay {
             position: fixed;
             top: 0; left: 0; width: 100vw; height: 100vh;
@@ -260,6 +381,19 @@
             display: flex;
             flex-direction: column;
             gap: 15px;
+            box-shadow: 0 8px 0 #000;
+        }
+
+        /* キャラクター詳細テキスト */
+        .detail-text-box {
+            font-size: 18px;
+            text-align: left;
+            line-height: 1.8;
+            margin: 15px 0;
+            background-color: #E8F8F5;
+            padding: 15px;
+            border: 4px solid #000;
+            border-radius: 8px;
         }
     </style>
 </head>
@@ -291,6 +425,43 @@
         </div>
     </div>
 
+    <!-- プレイモード選択画面（全画面） -->
+    <div id="screen-play" class="screen">
+        <button class="btn btn-red close-btn" id="btn-close-play">ホームに戻る</button>
+        <div class="mode-title">モード選択</div>
+        <div class="play-mode-container">
+            <button class="btn btn-purple mode-btn" id="btn-versus-mode">対戦モード</button>
+            <button class="btn btn-blue mode-btn" id="btn-story-mode">ストーリーモード</button>
+        </div>
+    </div>
+
+    <!-- マッチメイキング画面 -->
+    <div id="screen-matchmaking" class="screen">
+        <h1>相手を探しています...</h1>
+    </div>
+
+    <!-- バトル画面 -->
+    <div id="screen-battle" class="screen">
+        <!-- タイピングスペース確保部分（システムは今後実装） -->
+        <div class="battle-top-area">
+            <h2 style="margin: 0; padding-bottom: 5px;">タイピングエリア (準備中)</h2>
+            <input type="text" class="custom-input" placeholder="タイピング入力..." disabled style="margin-bottom: 0;">
+        </div>
+        
+        <!-- 戦闘フィールド -->
+        <div class="battle-field-area">
+            <div class="team-container" id="battle-enemy-team">
+                <!-- 敵キャラがここに生成されます -->
+            </div>
+            <div class="team-container" id="battle-player-team">
+                <!-- 自分のキャラがここに生成されます -->
+            </div>
+        </div>
+        
+        <!-- 地面 -->
+        <div class="battle-ground-area"></div>
+    </div>
+
     <!-- 装備画面 -->
     <div id="screen-equip" class="screen">
         <div class="equip-container">
@@ -298,7 +469,7 @@
             
             <a name="Chara" id="Chara"></a> <!-- Chara Anchor Tool -->
             
-            <div class="section-title">装備しているキャラ (最大8体)</div>
+            <div class="section-title">装備しているキャラ (最大4体)</div>
             <div class="equipped-area" id="equipped-list">
                 <!-- Javascriptでスロットを生成します -->
             </div>
@@ -313,13 +484,43 @@
         </div>
     </div>
 
-    <!-- プレイモード選択モーダル -->
-    <div id="modal-play-mode" class="modal-overlay">
-        <div class="modal-content">
-            <h2>モード選択</h2>
-            <button class="btn btn-yellow" onclick="alert('準備中')">メインモード</button>
-            <button class="btn btn-blue" onclick="alert('準備中')">サブモード</button>
-            <button class="btn btn-red" id="btn-close-play-modal">閉じる</button>
+    <!-- 設定モーダル（名前変更） -->
+    <div id="modal-settings" class="modal-overlay">
+        <div class="modal-content" style="min-width: 300px;">
+            <h2 style="margin-top: 0;">名前の変更</h2>
+            <input type="text" id="settings-name-input" class="custom-input" placeholder="新しい名前 (3〜12文字)" maxlength="12" style="width: 90%; margin: 0 auto 15px auto;">
+            <div style="display: flex; gap: 15px; justify-content: center;">
+                <button class="btn btn-red" id="btn-close-settings" style="padding: 10px 20px; font-size: 18px;">キャンセル</button>
+                <button class="btn btn-yellow" id="btn-update-name" style="padding: 10px 20px; font-size: 18px;">変更する</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- キャラクター詳細モーダル -->
+    <div id="modal-chara-detail" class="modal-overlay">
+        <div class="modal-content" style="width: 80%; max-width: 400px;">
+            <h2 id="detail-name" style="margin-top: 0; font-size: 28px;">名前</h2>
+            <div id="detail-rarity" style="font-size: 16px; font-weight: bold; margin-top: -15px; margin-bottom: 10px;">レアリティ</div>
+            <img id="detail-image" src="" alt="" style="width: 120px; height: 120px; margin: 0 auto; display: block; object-fit: contain;">
+            
+            <div class="detail-text-box">
+                <div><strong>❤️ HP:</strong> <span id="detail-hp"></span></div>
+                <div style="margin-top: 5px;"><strong>⚔️ 攻撃力:</strong> <span id="detail-attack"></span></div>
+                <div style="margin-top: 15px; padding-top: 15px; border-top: 2px dashed #000;">
+                    <strong>✨ 能力:</strong><br>
+                    <span id="detail-ability" style="display: inline-block; margin-top: 5px;"></span>
+                </div>
+            </div>
+
+            <button class="btn btn-red" id="btn-close-detail">閉じる</button>
+        </div>
+    </div>
+
+    <!-- 汎用メッセージモーダル -->
+    <div id="modal-message" class="modal-overlay">
+        <div class="modal-content" style="min-width: 250px;">
+            <h3 id="message-text" style="line-height: 1.5; margin-bottom: 20px;">メッセージ</h3>
+            <button class="btn btn-blue" id="btn-close-message">OK</button>
         </div>
     </div>
 
