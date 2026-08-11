@@ -5,6 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>バトルスライム</title>
     <style>
+        /* CSS変数の追加（バトル速度制御用） */
+        :root {
+            --battle-speed: 1;
+        }
+
         /* 全体の基本設定（ブロスタ風・ポップで太い枠線のUI） */
         body {
             margin: 0;
@@ -347,32 +352,54 @@
             justify-content: center;
             align-items: center;
             z-index: 10;
+            position: relative;
         }
 
+        /* ビルの背景を追加し、スライムを中央寄りに配置 */
         .battle-field-area {
             width: 100%;
             height: 55%;
             position: relative;
             display: flex;
-            justify-content: space-between;
+            justify-content: center; /* 変更: 中央寄せ */
+            gap: 150px; /* 変更: 中央寄せのための間隔 */
             align-items: flex-end;
             padding-bottom: 20px;
             box-sizing: border-box;
             z-index: 5;
+            background: 
+                linear-gradient(to top, #3498DB 0%, #3498DB 40%, transparent 40%) 10% bottom / 60px 120px no-repeat,
+                linear-gradient(to top, #9B59B6 0%, #9B59B6 60%, transparent 60%) 30% bottom / 80px 180px no-repeat,
+                linear-gradient(to top, #2ECC71 0%, #2ECC71 35%, transparent 35%) 60% bottom / 70px 100px no-repeat,
+                linear-gradient(to top, #F1C40F 0%, #F1C40F 50%, transparent 50%) 85% bottom / 90px 150px no-repeat;
+            background-color: #87CEEB; /* 空色 */
         }
 
+        /* 地面を道路風に改善 */
         .battle-ground-area {
             width: 100%;
             height: 20%;
-            background-color: #8B4513;
-            border-top: 6px solid #000;
+            background-color: #7F8C8D;
+            border-top: 6px solid #2C3E50;
             z-index: 10;
+            position: relative;
+        }
+        
+        .battle-ground-area::after {
+            content: "";
+            position: absolute;
+            top: 50%;
+            left: 0;
+            width: 100%;
+            height: 8px;
+            background: repeating-linear-gradient(90deg, #FFF 0, #FFF 50px, transparent 50px, transparent 100px);
+            transform: translateY(-50%);
         }
 
         .team-container {
             display: flex;
             gap: 15px;
-            padding: 0 40px;
+            padding: 0; /* 中央寄せ調整のためリセット */
             align-items: flex-end;
         }
 
@@ -391,7 +418,8 @@
             flex-direction: column;
             align-items: center;
             position: relative;
-            transition: transform 0.3s ease-in-out;
+            /* 速度変数を適用 */
+            transition: transform calc(0.3s / var(--battle-speed)) ease-in-out;
         }
 
         .battle-chara img {
@@ -402,6 +430,31 @@
             background: transparent;
             border: none;
             box-shadow: none;
+        }
+
+        /* 能力発動テキストのスタイル追加 */
+        .ability-text {
+            position: absolute;
+            top: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #E67E22;
+            color: #FFF;
+            padding: 4px 10px;
+            border-radius: 8px;
+            border: 2px solid #000;
+            font-size: 14px;
+            font-weight: 900;
+            opacity: 0;
+            pointer-events: none;
+            white-space: nowrap;
+            z-index: 20;
+            /* 速度変数を適用 */
+            transition: opacity calc(0.2s / var(--battle-speed)), transform calc(0.5s / var(--battle-speed));
+        }
+        .ability-text.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(-25px);
         }
 
         /* 敵の画像を左右反転 */
@@ -464,7 +517,8 @@
             transform: translateX(-150px) translateY(-20px) scale(1.1);
         }
         .damage-shake {
-            animation: shake 0.3s;
+            /* 速度変数を適用 */
+            animation: shake calc(0.3s / var(--battle-speed));
         }
         .fainted {
             opacity: 0.3;
@@ -568,6 +622,9 @@
 
     <!-- バトル画面 -->
     <div id="screen-battle" class="screen">
+        <!-- バトル速度変更ボタン -->
+        <button id="btn-speed-toggle" class="btn btn-yellow" style="position: absolute; top: 15px; right: 15px; padding: 10px 20px; font-size: 18px; z-index: 100; box-shadow: 0 4px 0 #000;">1倍速</button>
+
         <!-- タイピングスペース -->
         <div class="battle-top-area" id="typing-area">
             <div id="perfect-bonus-display"></div>
