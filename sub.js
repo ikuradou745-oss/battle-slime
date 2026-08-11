@@ -74,6 +74,11 @@ class MoneyDisplayController {
 }
 
 // ============================================================================
+// グローバル変数: バトル速度
+// ============================================================================
+let currentBattleSpeed = 1;
+
+// ============================================================================
 // メモ: スライムの画像の取得ですが、「（スライムの名前）.png」という感じです。
 // ============================================================================
 // キャラクターデータ (イエロースライムへ修正)
@@ -168,6 +173,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const typeUntyped = document.getElementById('type-untyped');
     const perfectBonusDisplay = document.getElementById('perfect-bonus-display');
     const battleMessage = document.getElementById('battle-message');
+    const btnSpeedToggle = document.getElementById('btn-speed-toggle');
 
     // モーダル関連
     const modalSettings = document.getElementById('modal-settings');
@@ -203,6 +209,49 @@ document.addEventListener('DOMContentLoaded', () => {
     const rewardGridContainer = document.getElementById('reward-grid-container');
     const modalLose = document.getElementById('modal-lose');
     const btnCloseLose = document.getElementById('btn-close-lose');
+
+    // ========================================================================
+    // バトル速度切り替えロジック
+    // ========================================================================
+    if (btnSpeedToggle) {
+        btnSpeedToggle.addEventListener('click', () => {
+            if (currentBattleSpeed === 1) {
+                currentBattleSpeed = 3;
+                btnSpeedToggle.textContent = "3倍速";
+                btnSpeedToggle.classList.remove('btn-yellow');
+                btnSpeedToggle.classList.add('btn-red');
+            } else {
+                currentBattleSpeed = 1;
+                btnSpeedToggle.textContent = "1倍速";
+                btnSpeedToggle.classList.remove('btn-red');
+                btnSpeedToggle.classList.add('btn-yellow');
+            }
+            // CSS変数に反映し、アニメーションの速度を更新
+            document.documentElement.style.setProperty('--battle-speed', currentBattleSpeed);
+        });
+    }
+
+    // ========================================================================
+    // 能力テキスト表示ロジック
+    // ========================================================================
+    function showAbilityText(dom, text = "能力発動") {
+        let abilityEl = dom.querySelector('.ability-text');
+        if (!abilityEl) {
+            abilityEl = document.createElement('div');
+            abilityEl.className = 'ability-text';
+            dom.appendChild(abilityEl);
+        }
+        abilityEl.textContent = text;
+        
+        // アニメーションのリセットと再実行
+        abilityEl.classList.remove('show');
+        void abilityEl.offsetWidth; // Reflow
+        abilityEl.classList.add('show');
+        
+        setTimeout(() => {
+            abilityEl.classList.remove('show');
+        }, 1000 / currentBattleSpeed);
+    }
 
     // ========================================================================
     // 基本関数
@@ -562,8 +611,9 @@ document.addEventListener('DOMContentLoaded', () => {
             battlePlayerTeam.appendChild(chara.dom);
         });
 
+        // 行動順: 味方は左(最初)から、敵は右(最後)から
         battleState.pIndex = 0;
-        battleState.eIndex = 0;
+        battleState.eIndex = battleState.enemyTeam.length - 1;
         battleState.perfectStreak = 0;
         battleState.isActive = true;
 
@@ -642,7 +692,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function startPlayerTurn() {
         if (!battleState.isActive) return;
         
-        // 味方全滅チェック
+        // 味方全滅チェック (左から右へ)
         while (battleState.pIndex < battleState.playerTeam.length && battleState.playerTeam[battleState.pIndex].currentHp <= 0) {
             battleState.pIndex++;
         }
@@ -651,11 +701,11 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
         
-        // 敵全滅チェック
-        while (battleState.eIndex < battleState.enemyTeam.length && battleState.enemyTeam[battleState.eIndex].currentHp <= 0) {
-            battleState.eIndex++;
+        // 敵全滅チェック (右から左へ)
+        while (battleState.eIndex >= 0 && battleState.enemyTeam[battleState.eIndex].currentHp <= 0) {
+            battleState.eIndex--;
         }
-        if (battleState.eIndex >= battleState.enemyTeam.length) {
+        if (battleState.eIndex < 0) {
             endBattle(true);
             return;
         }
@@ -672,9 +722,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (activePlayer.id === 'slime_01' && !activePlayer.revived) {
                     activePlayer.currentHp = activePlayer.hp / 2;
                     activePlayer.revived = true;
+                    showAbilityText(activePlayer.dom, "能力発動");
                     updateAllBattleUI();
                 } else {
-                    setTimeout(startPlayerTurn, 500);
+                    // バトル速度に応じてタイマーを短縮
+                    setTimeout(startPlayerTurn, 500 / currentBattleSpeed);
                     return;
                 }
             }
@@ -728,10 +780,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 updateAllBattleUI();
                 
-                // 少し待ってから攻撃
+                // 少し待ってから攻撃 (バトル速度を適用)
                 setTimeout(() => {
                     executeAttack(true);
-                }, 300);
+                }, 300 / currentBattleSpeed);
             }
         } else {
             // ミス
@@ -749,9 +801,11 @@ document.addEventListener('DOMContentLoaded', () => {
         attacker.attackCount = (attacker.attackCount || 0) + 1;
         if (attacker.id === 'slime_02' && attacker.attackCount % 3 === 0) {
             attacker.attack = Math.min(30, attacker.attack * 3);
+            showAbilityText(attacker.dom, "能力発動");
         }
         if (attacker.id === 'slime_03') {
             defender.poisonTurns = 3;
+            showAbilityText(attacker.dom, "能力発動");
         }
 
         // ダメージ計算
@@ -765,10 +819,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const animClass = isPlayerAttacking ? 'attack-move-right' : 'attack-move-left';
         attacker.dom.classList.add(animClass);
 
+        // バトル速度を適用したタイミング調整
         setTimeout(() => {
             attacker.dom.classList.remove(animClass);
             defender.dom.classList.add('damage-shake');
-            setTimeout(() => defender.dom.classList.remove('damage-shake'), 300);
+            setTimeout(() => defender.dom.classList.remove('damage-shake'), 300 / currentBattleSpeed);
 
             defender.currentHp -= finalDamage;
 
@@ -776,6 +831,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (defender.currentHp <= 0 && defender.id === 'slime_01' && !defender.revived) {
                 defender.currentHp = defender.hp / 2;
                 defender.revived = true;
+                showAbilityText(defender.dom, "能力発動");
             }
 
             updateAllBattleUI();
@@ -786,23 +842,23 @@ document.addEventListener('DOMContentLoaded', () => {
                 } else {
                     startPlayerTurn();
                 }
-            }, 800);
-        }, 200);
+            }, 800 / currentBattleSpeed);
+        }, 200 / currentBattleSpeed);
     }
 
     function startEnemyTurn() {
         if (!battleState.isActive) return;
 
-        // 敵全滅チェック
-        while (battleState.eIndex < battleState.enemyTeam.length && battleState.enemyTeam[battleState.eIndex].currentHp <= 0) {
-            battleState.eIndex++;
+        // 敵全滅チェック (右から左へ)
+        while (battleState.eIndex >= 0 && battleState.enemyTeam[battleState.eIndex].currentHp <= 0) {
+            battleState.eIndex--;
         }
-        if (battleState.eIndex >= battleState.enemyTeam.length) {
+        if (battleState.eIndex < 0) {
             endBattle(true);
             return;
         }
 
-        // プレイヤー全滅チェック
+        // プレイヤー全滅チェック (左から右へ)
         while (battleState.pIndex < battleState.playerTeam.length && battleState.playerTeam[battleState.pIndex].currentHp <= 0) {
             battleState.pIndex++;
         }
@@ -822,9 +878,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (activeEnemy.id === 'slime_01' && !activeEnemy.revived) {
                     activeEnemy.currentHp = activeEnemy.hp / 2;
                     activeEnemy.revived = true;
+                    showAbilityText(activeEnemy.dom, "能力発動");
                     updateAllBattleUI();
                 } else {
-                    setTimeout(startPlayerTurn, 500);
+                    setTimeout(startPlayerTurn, 500 / currentBattleSpeed);
                     return;
                 }
             }
@@ -836,10 +893,10 @@ document.addEventListener('DOMContentLoaded', () => {
         battleMessage.style.display = 'block';
         battleMessage.textContent = "相手のターン...";
 
-        // 1秒待ってから攻撃実行
+        // 1秒待ってから攻撃実行 (バトル速度を適用)
         setTimeout(() => {
             executeAttack(false);
-        }, 1000);
+        }, 1000 / currentBattleSpeed);
     }
 
     function endBattle(isWin) {
@@ -851,7 +908,7 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 modalLose.classList.add('active');
             }
-        }, 1000);
+        }, 1000 / currentBattleSpeed);
     }
 
     btnCloseLose.addEventListener('click', () => {
