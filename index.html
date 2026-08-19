@@ -337,6 +337,8 @@
         .rarity-common { background-color: #BDC3C7; } /* 灰色 */
         .rarity-uncommon { background-color: #2ECC71; } /* 緑色 */
         .rarity-rare { background-color: #3498DB; color: #FFF; } /* 青色 */
+        .rarity-epic { background-color: #9B59B6; color: #FFF; } /* 紫色 */
+        .rarity-legendary { background-color: #F1C40F; color: #000; } /* 金色 */
 
         /* バトル画面のスタイル */
         #screen-battle {
@@ -362,8 +364,8 @@
             height: 55%;
             position: relative;
             display: flex;
-            justify-content: center; /* 変更: 中央寄せ */
-            gap: 150px; /* 変更: 中央寄せのための間隔 */
+            justify-content: center; /* 中央寄せ */
+            gap: 150px; /* 中央寄せのための間隔 */
             align-items: flex-end;
             padding-bottom: 20px;
             box-sizing: border-box;
@@ -699,8 +701,17 @@
 
     <!-- プロフィール作成モーダル -->
     <div id="modal-profile-edit" class="modal-overlay">
-        <div class="modal-content" style="width: 90%; max-width: 350px;">
+        <div class="modal-content" style="width: 90%; max-width: 380px;">
             <h2 style="margin-top:0;">プロフィール作成</h2>
+            
+            <!-- 追加されたデモプロフィールエリア -->
+            <div style="text-align: left; margin-bottom: 10px;">
+                <h3 style="margin: 0 0 5px 0; font-size: 14px;">デモから選んで編集:</h3>
+                <div id="demo-profiles-container" style="display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; border-bottom: 2px dashed #ccc;">
+                    <!-- JSでデモボタンを生成します -->
+                </div>
+            </div>
+
             <div id="color-palette" style="display:flex; gap:10px; justify-content:center; margin-bottom:15px; flex-wrap: wrap;"></div>
             <div id="profile-grid" style="display:grid; grid-template-columns: repeat(14, 1fr); gap: 1px; background:#ccc; width: 280px; height: 280px; margin: 0 auto; border: 4px solid #000; touch-action: none;"></div>
             <div style="display: flex; gap: 15px; justify-content: center; margin-top: 20px;">
@@ -791,19 +802,10 @@
         </div>
     </div>
 
-    <!-- JSファイル読み込み (ファイル分割対応) -->
+    <!-- JSファイル読み込み (ファイル分割対応: スクリプトは3つです) -->
     <script src="sub.js"></script>
+    <script src="demo.js"></script>
     <script src="main.js"></script>
-    
-    <!-- ======================================================================
-    メモコーナー:
-    - [2026-08-12] 敵の出現ロジックの修正。自キャラのレアリティを基準に敵をバラバラに生成。
-    - 連勝記録 (winStreak) を導入し、連勝するごとにレアリティ上昇確率を+5%ずつ増加するように実装。
-    - 高レアリティへの昇格確率は1%ずつ減少し、1%未満からは0.5%, 0.25%と半減する仕組みを追加。
-    - 新キャラ「マゼンタスライム」「スライムソード」「オレンジスライム」を追加実装。
-    - レーザー攻撃、死亡時カウンター攻撃のアニメーションと、気絶・燃焼などの状態異常を追加実装。
-    - [2026-08-18] 画像のデータは「（スライムの名前）.png」で入っています（gazouフォルダの中にあります）。
-    - [2026-08-18] スクリプトの分割を実施。main.jsにはメインロジックやシステムクラスを、sub.jsにはキャラデータやアニメーション関数を記述しています。
-    ======================================================================= -->
+
 </body>
 </html>
