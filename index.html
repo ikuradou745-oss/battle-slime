@@ -337,8 +337,6 @@
         .rarity-common { background-color: #BDC3C7; } /* 灰色 */
         .rarity-uncommon { background-color: #2ECC71; } /* 緑色 */
         .rarity-rare { background-color: #3498DB; color: #FFF; } /* 青色 */
-        .rarity-epic { background-color: #9B59B6; color: #FFF; } /* 紫色 */
-        .rarity-legendary { background-color: #F1C40F; color: #000; } /* 金色 */
 
         /* バトル画面のスタイル */
         #screen-battle {
@@ -701,14 +699,13 @@
 
     <!-- プロフィール作成モーダル -->
     <div id="modal-profile-edit" class="modal-overlay">
-        <div class="modal-content" style="width: 90%; max-width: 380px;">
+        <div class="modal-content" style="width: 90%; max-width: 450px;">
             <h2 style="margin-top:0;">プロフィール作成</h2>
             
-            <!-- 追加されたデモプロフィールエリア -->
-            <div style="text-align: left; margin-bottom: 10px;">
-                <h3 style="margin: 0 0 5px 0; font-size: 14px;">デモから選んで編集:</h3>
-                <div id="demo-profiles-container" style="display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; border-bottom: 2px dashed #ccc;">
-                    <!-- JSでデモボタンを生成します -->
+            <div style="margin-bottom: 15px; text-align: left; background: #E8F8F5; padding: 10px; border-radius: 8px; border: 4px solid #000;">
+                <div style="font-size: 16px; font-weight: bold; margin-bottom: 5px;">デモプロフィールから選ぶ:</div>
+                <div id="demo-profile-list" style="display: flex; gap: 15px; overflow-x: auto; padding-bottom: 5px;">
+                    <!-- デモプロフィールが生成されます -->
                 </div>
             </div>
 
@@ -802,10 +799,8 @@
         </div>
     </div>
 
-    <!-- JSファイル読み込み (ファイル分割対応: スクリプトは3つです) -->
-    <script src="sub.js"></script>
-    <script src="demo.js"></script>
+    <!-- 統合されたJSファイル読み込み -->
     <script src="main.js"></script>
-
+    
 </body>
 </html>
