@@ -10,7 +10,8 @@ const characterDatabase = [
         hp: 10,
         attack: 1,
         ability: "一回だけ死んでもHPを半分にして復活する",
-        image: encodeURI("gazou/スライム.png")
+        // 画像が正しく相対パスで取得できるように修正しています
+        image: "./gazou/スライム.png"
     },
     {
         id: "slime_02",
@@ -19,7 +20,7 @@ const characterDatabase = [
         hp: 7,
         attack: 1,
         ability: "3回目の攻撃は攻撃力3倍（最大30までアップ可能）",
-        image: encodeURI("gazou/イエロースライム.png")
+        image: "./gazou/イエロースライム.png"
     },
     {
         id: "slime_03",
@@ -28,7 +29,7 @@ const characterDatabase = [
         hp: 10,
         attack: 1,
         ability: "相手を3ターン毒状態にする（毒状態になると毎ターン1ダメージ喰らいます。）",
-        image: encodeURI("gazou/グリーンスライム.png")
+        image: "./gazou/グリーンスライム.png"
     },
     {
         id: "slime_04",
@@ -37,7 +38,7 @@ const characterDatabase = [
         hp: 8,
         attack: 1,
         ability: "3回の攻撃に1回「レーザー攻撃」を行う（攻撃力1.5）。相手を1ターン気絶させる。",
-        image: encodeURI("gazou/マゼンタスライム.png")
+        image: "./gazou/マゼンタスライム.png"
     },
     {
         id: "slime_05",
@@ -46,7 +47,7 @@ const characterDatabase = [
         hp: 10,
         attack: 2,
         ability: "死亡時、相手を切りつけて通常攻撃力の3倍のダメージを与える。",
-        image: encodeURI("gazou/スライムソード.png")
+        image: "./gazou/スライムソード.png"
     },
     {
         id: "slime_06",
@@ -55,7 +56,7 @@ const characterDatabase = [
         hp: 12,
         attack: 0.9,
         ability: "攻撃時、相手を3ターン燃やす。燃焼で3回ダメージを受けると1ターン行動不可になる。",
-        image: encodeURI("gazou/オレンジスライム.png")
+        image: "./gazou/オレンジスライム.png"
     }
 ];
 
