@@ -362,8 +362,8 @@
             height: 55%;
             position: relative;
             display: flex;
-            justify-content: center; /* 中央寄せ */
-            gap: 150px; /* 中央寄せのための間隔 */
+            justify-content: center; /* 変更: 中央寄せ */
+            gap: 150px; /* 変更: 中央寄せのための間隔 */
             align-items: flex-end;
             padding-bottom: 20px;
             box-sizing: border-box;
@@ -697,21 +697,19 @@
         </div>
     </div>
 
-    <!-- プロフィール作成モーダル -->
+    <!-- プロフィール作成・編集モーダル -->
     <div id="modal-profile-edit" class="modal-overlay">
-        <div class="modal-content" style="width: 90%; max-width: 450px;">
-            <h2 style="margin-top:0;">プロフィール作成</h2>
-            
-            <div style="margin-bottom: 15px; text-align: left; background: #E8F8F5; padding: 10px; border-radius: 8px; border: 4px solid #000;">
-                <div style="font-size: 16px; font-weight: bold; margin-bottom: 5px;">デモプロフィールから選ぶ:</div>
-                <div id="demo-profile-list" style="display: flex; gap: 15px; overflow-x: auto; padding-bottom: 5px;">
-                    <!-- デモプロフィールが生成されます -->
-                </div>
-            </div>
+        <div class="modal-content" style="width: 94%; max-width: 650px; max-height: 92vh; overflow-y: auto;">
+            <h2 style="margin-top:0;">プロフィール作成・編集</h2>
 
+            <div style="font-size:14px; margin-bottom:8px;">デモプロフィールを選ぶと、そのまま編集できます。</div>
+            <div id="demo-profile-list" style="display:grid; grid-template-columns:repeat(5, minmax(72px, 1fr)); gap:8px; width:100%; margin-bottom:15px;"></div>
+
+            <div style="font-size:14px; margin-bottom:6px;">色を選んで、14×14のマスをぬってね。</div>
             <div id="color-palette" style="display:flex; gap:10px; justify-content:center; margin-bottom:15px; flex-wrap: wrap;"></div>
-            <div id="profile-grid" style="display:grid; grid-template-columns: repeat(14, 1fr); gap: 1px; background:#ccc; width: 280px; height: 280px; margin: 0 auto; border: 4px solid #000; touch-action: none;"></div>
-            <div style="display: flex; gap: 15px; justify-content: center; margin-top: 20px;">
+            <div id="profile-grid" style="display:grid; grid-template-columns:repeat(14, 1fr); gap:1px; background:#ccc; width:280px; height:280px; margin:0 auto; border:4px solid #000; touch-action:none;"></div>
+
+            <div style="display:flex; gap:15px; justify-content:center; margin-top:20px;">
                 <button class="btn btn-blue" id="btn-close-profile">閉じる</button>
                 <button class="btn btn-yellow" id="btn-save-profile">保存</button>
             </div>
@@ -799,8 +797,19 @@
         </div>
     </div>
 
-    <!-- 統合されたJSファイル読み込み -->
-    <script src="main.js"></script>
+    <!-- JSファイル読み込み (ファイル分割対応) -->
+    <script src="./sub.js"></script>
+    <script src="./main.js"></script>
     
+    <!-- ======================================================================
+    メモコーナー:
+    - [2026-08-12] 敵の出現ロジックの修正。自キャラのレアリティを基準に敵をバラバラに生成。
+    - 連勝記録 (winStreak) を導入し、連勝するごとにレアリティ上昇確率を+5%ずつ増加するように実装。
+    - 高レアリティへの昇格確率は1%ずつ減少し、1%未満からは0.5%, 0.25%と半減する仕組みを追加。
+    - 新キャラ「マゼンタスライム」「スライムソード」「オレンジスライム」を追加実装。
+    - レーザー攻撃、死亡時カウンター攻撃のアニメーションと、気絶・燃焼などの状態異常を追加実装。
+    - [2026-08-19] キャラ画像URLを「./gazou/」＋URLエンコードして読み込む方式に変更。日本語ファイル名でも安定して表示できるようにした。
+    - [2026-08-19] プロフィール編集に10個のデモプロフィールを追加。デモを選んだあと、そのまま14×14エディターで編集・保存できる。
+    ======================================================================= -->
 </body>
 </html>
