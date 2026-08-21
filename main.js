@@ -276,12 +276,245 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // --- プロフィール作成機能 ---
+    // --- プロフィールデモ機能とエディタ ---
     let currentProfileColor = '#000000';
     let tempProfileData = Array(196).fill('transparent');
     let isDrawing = false;
 
+    // カラーマップ
+    const colorCodeMap = {
+        '.': 'transparent', 'B': '#3498DB', 'R': '#E74C3C', 'G': '#2ECC71',
+        'Y': '#F1C40F', 'K': '#000000', 'W': '#FFFFFF', 'M': '#9B59B6',
+        'O': '#E67E22', 'C': '#87CEEB', 'S': '#BDC3C7'
+    };
+
+    // 10個のデモプロフィールの定義（14x14の文字列を配列に変換）
+    const demoProfiles = [
+        {
+            name: "スライム",
+            pattern: [
+                "..............",
+                "..............",
+                "..............",
+                "..............",
+                ".....BBBB.....",
+                "...BBBBBBBB...",
+                "..BBB.BB.BBB..",
+                ".BBBB.BB.BBBB.",
+                ".BBBBBBBBBBBB.",
+                ".BBBBBBBBBBBB.",
+                ".BBBBBBBBBBBB.",
+                "..BBBBBBBBBB..",
+                "..............",
+                ".............."
+            ]
+        },
+        {
+            name: "ハート",
+            pattern: [
+                "..............",
+                "..............",
+                "..RRR....RRR..",
+                ".RRRRR..RRRRR.",
+                ".RRRRRRRRRRRR.",
+                ".RRRRRRRRRRRR.",
+                "..RRRRRRRRRR..",
+                "...RRRRRRRR...",
+                "....RRRRRR....",
+                ".....RRRR.....",
+                "......RR......",
+                "..............",
+                "..............",
+                ".............."
+            ]
+        },
+        {
+            name: "剣",
+            pattern: [
+                ".............S",
+                "............SS",
+                "...........SS.",
+                "..........SS..",
+                ".........SS...",
+                "........SS....",
+                ".......SS.....",
+                "......SS......",
+                ".....SS.......",
+                "..KKSS........",
+                ".KKKK.........",
+                "K.KK..........",
+                "..............",
+                ".............."
+            ]
+        },
+        {
+            name: "星",
+            pattern: [
+                "..............",
+                "......YY......",
+                "......YY......",
+                ".....YYYY.....",
+                "..YYYYYYYYYY..",
+                "...YYYYYYYY...",
+                "....YYYYYY....",
+                "....YYYYYY....",
+                "...YYY..YYY...",
+                "..YYY....YYY..",
+                "..YY......YY..",
+                "..............",
+                "..............",
+                ".............."
+            ]
+        },
+        {
+            name: "ポーション",
+            pattern: [
+                "..............",
+                ".....KKKK.....",
+                ".....KWWK.....",
+                ".....KWWK.....",
+                "....KMMMMK....",
+                "...KMMMMMMK...",
+                "..KMMMMMMMMK..",
+                "..KMMMMMMMMK..",
+                "..KMMMMMMMMK..",
+                "..KMMMMMMMMK..",
+                "...KMMMMMMK...",
+                "....KKKKKK....",
+                "..............",
+                ".............."
+            ]
+        },
+        {
+            name: "炎",
+            pattern: [
+                "..............",
+                ".......R......",
+                "......RR......",
+                ".....RRRO.....",
+                "....RRROO.....",
+                "...RRROOOO....",
+                "..RRRROOOOO...",
+                "..RRRROOOOOO..",
+                "..RRRROOYOOO..",
+                "...RRROYYOO...",
+                "....RROOOO....",
+                ".....RRRR.....",
+                "..............",
+                ".............."
+            ]
+        },
+        {
+            name: "顔文字",
+            pattern: [
+                "..............",
+                "..............",
+                "..............",
+                "....K....K....",
+                "....K....K....",
+                "..............",
+                "..............",
+                "..............",
+                "...K......K...",
+                "...K......K...",
+                "....KKKKKK....",
+                "..............",
+                "..............",
+                ".............."
+            ]
+        },
+        {
+            name: "葉っぱ",
+            pattern: [
+                "..............",
+                ".......G......",
+                "......GGG.....",
+                ".....GGGGG....",
+                "....GGGGGG....",
+                "...GGGGGGG....",
+                "..GGGGGGGG....",
+                "..GGGGGGG.....",
+                "..GGGGGG......",
+                "...GGGG.......",
+                "....GG........",
+                "....G.........",
+                "..............",
+                ".............."
+            ]
+        },
+        {
+            name: "雲",
+            pattern: [
+                "..............",
+                "..............",
+                "..............",
+                "..............",
+                "......CCC.....",
+                "....CCCCCCC...",
+                "..CCCCCCCCCC..",
+                ".CCCCCCCCCCCC.",
+                ".CCCCCCCCCCCC.",
+                "..CCCCCCCCCC..",
+                "..............",
+                "..............",
+                "..............",
+                ".............."
+            ]
+        },
+        {
+            name: "市松模様",
+            pattern: [
+                "K.K.K.K.K.K.K.",
+                ".K.K.K.K.K.K.K",
+                "K.K.K.K.K.K.K.",
+                ".K.K.K.K.K.K.K",
+                "K.K.K.K.K.K.K.",
+                ".K.K.K.K.K.K.K",
+                "K.K.K.K.K.K.K.",
+                ".K.K.K.K.K.K.K",
+                "K.K.K.K.K.K.K.",
+                ".K.K.K.K.K.K.K",
+                "K.K.K.K.K.K.K.",
+                ".K.K.K.K.K.K.K",
+                "K.K.K.K.K.K.K.",
+                ".K.K.K.K.K.K.K"
+            ]
+        }
+    ];
+
+    function parseDemoPattern(patternArray) {
+        let result = [];
+        for (let row of patternArray) {
+            for (let char of row) {
+                result.push(colorCodeMap[char] || 'transparent');
+            }
+        }
+        return result;
+    }
+
+    function updateGridDisplay() {
+        const grid = document.getElementById('profile-grid');
+        Array.from(grid.children).forEach((cell, index) => {
+            cell.style.backgroundColor = tempProfileData[index];
+        });
+    }
+
     function initProfileEditor() {
+        // デモプロフィールのボタン生成
+        const demoContainer = document.getElementById('demo-profiles-container');
+        demoContainer.innerHTML = '';
+        demoProfiles.forEach((demo, idx) => {
+            const btn = document.createElement('button');
+            btn.className = 'btn btn-blue btn-small';
+            btn.textContent = demo.name;
+            btn.addEventListener('click', () => {
+                tempProfileData = parseDemoPattern(demo.pattern);
+                updateGridDisplay();
+            });
+            demoContainer.appendChild(btn);
+        });
+
+        // カラーパレットの設定
         const paletteColors = ['#000000', '#FFFFFF', '#E74C3C', '#3498DB', '#2ECC71', '#F1C40F', '#9B59B6', '#E67E22', '#87CEEB', 'transparent'];
         const paletteContainer = document.getElementById('color-palette');
         paletteContainer.innerHTML = '';
@@ -313,6 +546,7 @@ document.addEventListener('DOMContentLoaded', () => {
             paletteContainer.appendChild(colorBtn);
         });
 
+        // お絵かきグリッドの設定
         const grid = document.getElementById('profile-grid');
         grid.innerHTML = '';
         
