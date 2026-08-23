@@ -56,6 +56,42 @@ const characterDatabase = [
         attack: 0.9,
         ability: "攻撃時、相手を3ターン燃やす。燃焼で3回ダメージを受けると1ターン行動不可になる。",
         image: "./gazou/orangeslime.png"
+    },
+    {
+        id: "slime_07",
+        name: "スライムシールド",
+        rarity: "rare",
+        hp: 20,
+        attack: 0.5,
+        ability: "3ターンに1回、攻撃をせずに1ターン「守り」の体制に入り、ダメージを50%カットする。",
+        image: "./gazou/slimeshield.png"
+    },
+    {
+        id: "slime_08",
+        name: "水晶スライム",
+        rarity: "rare",
+        hp: 12,
+        attack: 1.1,
+        ability: "攻撃した時、相手を2ターンに1度「氷」状態にする（攻撃力25%減少、3ターン目は行動不能になる）。",
+        image: "./gazou/suisyouslime.png"
+    },
+    {
+        id: "slime_09",
+        name: "飛行スライム",
+        rarity: "legendary",
+        hp: 10.5,
+        attack: 2.5,
+        ability: "2ターンに1回攻撃を回避する。4ターンに1回上から落下する攻撃を行い、ダメージが2倍になる。",
+        image: "./gazou/flyingslime.png"
+    },
+    {
+        id: "slime_10",
+        name: "ライフスライム",
+        rarity: "epic",
+        hp: 15,
+        attack: 1.2,
+        ability: "3ターンに1度、最大HPの18%を回復する。一度だけ、死亡した仲間をHP1で復活させる（手持ちにいるだけで発動）。",
+        image: "./gazou/lifeslime.png"
     }
 ];
 
@@ -128,6 +164,22 @@ function playSlashAnimation(targetDom, speed) {
     setTimeout(() => {
         slash.remove();
     }, 300 / speed);
+}
+
+// 落下攻撃アニメーション
+function playJumpAttackAnimation(attackerDom, speed) {
+    if (!attackerDom) return;
+    attackerDom.style.transition = `transform ${0.2 / speed}s ease-out`;
+    attackerDom.style.transform = `translateY(-150px) scale(1.2)`;
+    
+    setTimeout(() => {
+        attackerDom.style.transition = `transform ${0.1 / speed}s ease-in`;
+        attackerDom.style.transform = `translateY(20px) scale(1.1)`; 
+        setTimeout(() => {
+            attackerDom.style.transition = `transform ${0.2 / speed}s ease-out`;
+            attackerDom.style.transform = `translateY(0) scale(1)`; 
+        }, 100 / speed);
+    }, 200 / speed);
 }
 
 // 動的CSSの追加
