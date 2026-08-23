@@ -994,11 +994,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const img = document.createElement('img');
         img.src = chara.image;
         
-        // --- 修正箇所: 画像が見つからない場合のフォールバックを追加 ---
-        img.onerror = function() {
-            this.src = 'data:image/svg+xml;charset=UTF-8,%3Csvg xmlns="http://www.w3.org/2000/svg" width="60" height="60" viewBox="0 0 60 60"%3E%3Crect fill="%23ddd" width="60" height="60"/%3E%3Ctext fill="%23555" x="30" y="30" font-family="sans-serif" font-size="10" text-anchor="middle" dy="3"%3ENo Image%3C/text%3E%3C/svg%3E';
-        };
-        
         const statsDiv = document.createElement('div');
         statsDiv.className = 'battle-stats';
         
