@@ -37,7 +37,7 @@ const characterDatabase = [
         hp: 8,
         attack: 1,
         ability: "3回の攻撃に1回「レーザー攻撃」を行う（攻撃力1.5）。相手を1ターン気絶させる。",
-        image: "./gazou/マゼンタスライム.png"
+        image: "./gazou/magentaslime.png"
     },
     {
         id: "slime_05",
@@ -46,7 +46,7 @@ const characterDatabase = [
         hp: 10,
         attack: 2,
         ability: "死亡時、相手を切りつけて通常攻撃力の3倍のダメージを与える。",
-        image: "./gazou/スライムソード.png"
+        image: "./gazou/slimesword.png"
     },
     {
         id: "slime_06",
@@ -55,7 +55,7 @@ const characterDatabase = [
         hp: 12,
         attack: 0.9,
         ability: "攻撃時、相手を3ターン燃やす。燃焼で3回ダメージを受けると1ターン行動不可になる。",
-        image: "./gazou/オレンジスライム.png"
+        image: "./gazou/orangeslime.png"
     }
 ];
 
