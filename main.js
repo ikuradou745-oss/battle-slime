@@ -773,6 +773,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (chara.rarity === 'common') card.classList.add('rarity-common');
         else if (chara.rarity === 'uncommon') card.classList.add('rarity-uncommon');
         else if (chara.rarity === 'rare') card.classList.add('rarity-rare');
+        else if (chara.rarity === 'epic') card.classList.add('rarity-epic');
+        else if (chara.rarity === 'legendary') card.classList.add('rarity-legendary');
         
         const img = document.createElement('img');
         img.src = chara.image;
@@ -837,7 +839,9 @@ document.addEventListener('DOMContentLoaded', () => {
         currentWord: null,
         typedIndex: 0,
         isPerfect: true,
-        isActive: false
+        isActive: false,
+        playerLifeSlimeReviveUsed: false,
+        enemyLifeSlimeReviveUsed: false
     };
 
     const rarityRanks = ['common', 'uncommon', 'rare', 'epic', 'legendary'];
@@ -890,6 +894,9 @@ document.addEventListener('DOMContentLoaded', () => {
         battlePlayerTeam.innerHTML = "";
         battleEnemyTeam.innerHTML = "";
         
+        battleState.playerLifeSlimeReviveUsed = false;
+        battleState.enemyLifeSlimeReviveUsed = false;
+
         battleState.playerTeam = gameData.equippedSlimes.map(id => {
             const base = characterDatabase.find(c => c.id === id);
             return { 
@@ -902,6 +909,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 stunTurns: 0, 
                 revived: false, 
                 countered: false,
+                isDefending: false,
+                freezeTurns: 0,
+                evadeCount: 0,
+                jumpAttackCount: 0,
+                healCount: 0,
+                lifeSlimeRevived: false,
                 isPlayer: true, 
                 dom: null 
             };
@@ -911,7 +924,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (gameData.isFirstBattle) {
             const base = characterDatabase.find(c => c.id === 'slime_01');
             battleState.enemyTeam.push({ 
-                ...base, currentHp: base.hp, attackCount: 0, poisonTurns: 0, burnTurns: 0, burnDamageCount: 0, stunTurns: 0, revived: false, countered: false, isPlayer: false, dom: null 
+                ...base, currentHp: base.hp, attackCount: 0, poisonTurns: 0, burnTurns: 0, burnDamageCount: 0, stunTurns: 0, revived: false, countered: false, isDefending: false, freezeTurns: 0, evadeCount: 0, jumpAttackCount: 0, healCount: 0, lifeSlimeRevived: false, isPlayer: false, dom: null 
             });
             gameData.isFirstBattle = false;
             gameData.saveGameData();
@@ -958,6 +971,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     stunTurns: 0,
                     revived: false, 
                     countered: false,
+                    isDefending: false,
+                    freezeTurns: 0,
+                    evadeCount: 0,
+                    jumpAttackCount: 0,
+                    healCount: 0,
+                    lifeSlimeRevived: false,
                     isPlayer: false, 
                     dom: null 
                 });
@@ -1009,6 +1028,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (chara.stunTurns > 0) icons.push('😵‍💫');
         if (chara.burnTurns > 0) icons.push('🔥');
         if (chara.poisonTurns > 0) icons.push('☠️');
+        if (chara.freezeTurns > 0) icons.push('🧊');
+        if (chara.isDefending) icons.push('🛡️');
         
         const statusDiv = chara.dom.querySelector('.battle-status-effect');
         if (icons.length > 0 && chara.currentHp > 0) {
@@ -1056,6 +1077,23 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    function checkLifeSlimeRevive(deadChara, team, isPlayerTeam) {
+        if (deadChara.currentHp <= 0 && !deadChara.lifeSlimeRevived) {
+            let hasLifeSlime = team.some(c => c.id === 'slime_10');
+            let usedFlag = isPlayerTeam ? battleState.playerLifeSlimeReviveUsed : battleState.enemyLifeSlimeReviveUsed;
+            
+            if (hasLifeSlime && !usedFlag) {
+                deadChara.currentHp = 1;
+                deadChara.lifeSlimeRevived = true;
+                if (isPlayerTeam) battleState.playerLifeSlimeReviveUsed = true;
+                else battleState.enemyLifeSlimeReviveUsed = true;
+                showAbilityText(deadChara.dom, "ライフの加護!");
+                return true;
+            }
+        }
+        return false;
+    }
+
     function checkDeathCounter(deadChara, killerChara) {
         if (deadChara.currentHp <= 0 && deadChara.id === 'slime_05' && !deadChara.countered && killerChara) {
             deadChara.countered = true;
@@ -1063,10 +1101,14 @@ document.addEventListener('DOMContentLoaded', () => {
             playSlashAnimation(killerChara.dom, currentBattleSpeed);
             killerChara.currentHp -= deadChara.attack * 3;
             
-            if (killerChara.currentHp <= 0 && killerChara.id === 'slime_01' && !killerChara.revived) {
-                killerChara.currentHp = killerChara.hp / 2;
-                killerChara.revived = true;
-                showAbilityText(killerChara.dom, "能力発動");
+            if (killerChara.currentHp <= 0) {
+                if (killerChara.id === 'slime_01' && !killerChara.revived) {
+                    killerChara.currentHp = killerChara.hp / 2;
+                    killerChara.revived = true;
+                    showAbilityText(killerChara.dom, "能力発動");
+                } else {
+                    checkLifeSlimeRevive(killerChara, killerChara.isPlayer ? battleState.playerTeam : battleState.enemyTeam, killerChara.isPlayer);
+                }
             }
             updateAllBattleUI();
         }
@@ -1094,6 +1136,8 @@ document.addEventListener('DOMContentLoaded', () => {
         let activePlayer = battleState.playerTeam[battleState.pIndex];
         let activeEnemy = battleState.enemyTeam[battleState.eIndex];
 
+        activePlayer.isDefending = false;
+
         if (activePlayer.poisonTurns > 0) {
             activePlayer.currentHp -= 1;
             activePlayer.poisonTurns -= 1;
@@ -1107,6 +1151,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 activePlayer.burnDamageCount = 0;
             }
         }
+
+        if (activePlayer.freezeTurns > 0) {
+            if (activePlayer.freezeTurns === 1) {
+                activePlayer.freezeTurns -= 1;
+                showAbilityText(activePlayer.dom, "氷結(行動不能)");
+                updateAllBattleUI();
+                setTimeout(startEnemyTurn, 500 / currentBattleSpeed);
+                return;
+            } else {
+                activePlayer.freezeTurns -= 1;
+            }
+        }
+        
         updateAllBattleUI();
         
         if (activePlayer.currentHp <= 0) {
@@ -1114,6 +1171,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 activePlayer.currentHp = activePlayer.hp / 2;
                 activePlayer.revived = true;
                 showAbilityText(activePlayer.dom, "能力発動");
+                updateAllBattleUI();
+            } else if (checkLifeSlimeRevive(activePlayer, battleState.playerTeam, true)) {
                 updateAllBattleUI();
             } else {
                 checkDeathCounter(activePlayer, activeEnemy);
@@ -1190,59 +1249,128 @@ document.addEventListener('DOMContentLoaded', () => {
         let attacker = isPlayerAttacking ? battleState.playerTeam[battleState.pIndex] : battleState.enemyTeam[battleState.eIndex];
         let defender = isPlayerAttacking ? battleState.enemyTeam[battleState.eIndex] : battleState.playerTeam[battleState.pIndex];
 
-        attacker.attackCount = (attacker.attackCount || 0) + 1;
         let finalDamage = attacker.attack;
-
         let isLaserAttack = false;
-        if (attacker.id === 'slime_04' && attacker.attackCount % 3 === 0) {
-            finalDamage = 1.5;
-            defender.stunTurns = 1;
-            isLaserAttack = true;
-            showAbilityText(attacker.dom, "レーザー攻撃!");
+        let isJumpAttack = false;
+
+        // スライムシールドの行動
+        if (attacker.id === 'slime_07') {
+            attacker.attackCount = (attacker.attackCount || 0) + 1;
+            if (attacker.attackCount % 3 === 0) {
+                attacker.isDefending = true;
+                showAbilityText(attacker.dom, "守りの体制");
+                finalDamage = 0;
+            }
         }
 
-        if (attacker.id === 'slime_02' && attacker.attackCount % 3 === 0) {
-            attacker.attack = Math.min(30, attacker.attack * 3);
-            finalDamage = attacker.attack;
-            showAbilityText(attacker.dom, "能力発動");
-        }
-        if (attacker.id === 'slime_03') {
-            defender.poisonTurns = 3;
-            showAbilityText(attacker.dom, "能力発動");
-        }
-        if (attacker.id === 'slime_06') {
-            defender.burnTurns = 3;
-            defender.burnDamageCount = 0;
-            showAbilityText(attacker.dom, "燃焼付与!");
+        // ライフスライムの行動
+        if (attacker.id === 'slime_10') {
+            attacker.healCount = (attacker.healCount || 0) + 1;
+            if (attacker.healCount % 3 === 0) {
+                let healAmount = Math.round(attacker.hp * 0.18);
+                attacker.currentHp = Math.min(attacker.hp, attacker.currentHp + healAmount);
+                showAbilityText(attacker.dom, `回復(+${healAmount})`);
+            }
         }
 
-        if (isPlayerAttacking) {
+        if (finalDamage > 0) {
+            attacker.attackCount = (attacker.attackCount || 0) + 1;
+            
+            if (attacker.id === 'slime_04' && attacker.attackCount % 3 === 0) {
+                finalDamage = 1.5;
+                defender.stunTurns = 1;
+                isLaserAttack = true;
+                showAbilityText(attacker.dom, "レーザー攻撃!");
+            }
+
+            if (attacker.id === 'slime_02' && attacker.attackCount % 3 === 0) {
+                attacker.attack = Math.min(30, attacker.attack * 3);
+                finalDamage = attacker.attack;
+                showAbilityText(attacker.dom, "能力発動");
+            }
+            if (attacker.id === 'slime_03') {
+                defender.poisonTurns = 3;
+                showAbilityText(attacker.dom, "能力発動");
+            }
+            if (attacker.id === 'slime_06') {
+                defender.burnTurns = 3;
+                defender.burnDamageCount = 0;
+                showAbilityText(attacker.dom, "燃焼付与!");
+            }
+            
+            if (attacker.id === 'slime_08') {
+                if (attacker.attackCount % 2 === 0) {
+                    defender.freezeTurns = 3;
+                    showAbilityText(attacker.dom, "氷状態付与!");
+                }
+            }
+
+            if (attacker.id === 'slime_09') {
+                attacker.jumpAttackCount = (attacker.jumpAttackCount || 0) + 1;
+                if (attacker.jumpAttackCount % 4 === 0) {
+                    finalDamage *= 2;
+                    isJumpAttack = true;
+                    showAbilityText(attacker.dom, "落下攻撃!");
+                }
+            }
+        }
+
+        if (isPlayerAttacking && finalDamage > 0) {
             const multiplier = 1 + (0.2 * battleState.perfectStreak);
             finalDamage = finalDamage * multiplier;
         }
 
-        if (isLaserAttack) {
-            playLaserAnimation(attacker.dom, defender.dom, currentBattleSpeed);
-        } else {
-            const animClass = isPlayerAttacking ? 'attack-move-right' : 'attack-move-left';
-            attacker.dom.classList.add(animClass);
-            setTimeout(() => attacker.dom.classList.remove(animClass), 200 / currentBattleSpeed);
+        if (attacker.freezeTurns > 0 && finalDamage > 0) {
+            finalDamage *= 0.75;
+        }
+
+        let isEvaded = false;
+        if (defender.id === 'slime_09' && finalDamage > 0) {
+            defender.evadeCount = (defender.evadeCount || 0) + 1;
+            if (defender.evadeCount % 2 === 0) {
+                finalDamage = 0;
+                isEvaded = true;
+                showAbilityText(defender.dom, "回避!");
+            }
+        }
+
+        if (defender.isDefending && finalDamage > 0) {
+            finalDamage *= 0.5;
+            defender.isDefending = false;
+        }
+
+        if (finalDamage > 0 || attacker.id === 'slime_07') {
+            if (attacker.id === 'slime_07' && attacker.isDefending) {
+                // 防御アニメーションのみ(攻撃の動きなし)
+            } else if (isJumpAttack) {
+                playJumpAttackAnimation(attacker.dom, currentBattleSpeed);
+            } else if (isLaserAttack) {
+                playLaserAnimation(attacker.dom, defender.dom, currentBattleSpeed);
+            } else {
+                const animClass = isPlayerAttacking ? 'attack-move-right' : 'attack-move-left';
+                attacker.dom.classList.add(animClass);
+                setTimeout(() => attacker.dom.classList.remove(animClass), 200 / currentBattleSpeed);
+            }
         }
 
         setTimeout(() => {
-            defender.dom.classList.add('damage-shake');
-            setTimeout(() => defender.dom.classList.remove('damage-shake'), 300 / currentBattleSpeed);
+            if (!isEvaded && finalDamage > 0) {
+                defender.dom.classList.add('damage-shake');
+                setTimeout(() => defender.dom.classList.remove('damage-shake'), 300 / currentBattleSpeed);
+                defender.currentHp -= finalDamage;
+            }
 
-            defender.currentHp -= finalDamage;
-
-            if (defender.currentHp <= 0 && defender.id === 'slime_01' && !defender.revived) {
-                defender.currentHp = defender.hp / 2;
-                defender.revived = true;
-                showAbilityText(defender.dom, "能力発動");
+            if (defender.currentHp <= 0) {
+                if (defender.id === 'slime_01' && !defender.revived) {
+                    defender.currentHp = defender.hp / 2;
+                    defender.revived = true;
+                    showAbilityText(defender.dom, "能力発動");
+                } else if (checkLifeSlimeRevive(defender, isPlayerAttacking ? battleState.enemyTeam : battleState.playerTeam, !isPlayerAttacking)) {
+                    // 復活済み
+                }
             }
 
             checkDeathCounter(defender, attacker);
-
             updateAllBattleUI();
 
             setTimeout(() => {
@@ -1277,6 +1405,8 @@ document.addEventListener('DOMContentLoaded', () => {
         let activeEnemy = battleState.enemyTeam[battleState.eIndex];
         let activePlayer = battleState.playerTeam[battleState.pIndex];
 
+        activeEnemy.isDefending = false;
+
         if (activeEnemy.poisonTurns > 0) {
             activeEnemy.currentHp -= 1;
             activeEnemy.poisonTurns -= 1;
@@ -1290,6 +1420,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 activeEnemy.burnDamageCount = 0;
             }
         }
+
+        if (activeEnemy.freezeTurns > 0) {
+            if (activeEnemy.freezeTurns === 1) {
+                activeEnemy.freezeTurns -= 1;
+                showAbilityText(activeEnemy.dom, "氷結(行動不能)");
+                updateAllBattleUI();
+                setTimeout(startPlayerTurn, 500 / currentBattleSpeed);
+                return;
+            } else {
+                activeEnemy.freezeTurns -= 1;
+            }
+        }
+        
         updateAllBattleUI();
         
         if (activeEnemy.currentHp <= 0) {
@@ -1297,6 +1440,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 activeEnemy.currentHp = activeEnemy.hp / 2;
                 activeEnemy.revived = true;
                 showAbilityText(activeEnemy.dom, "能力発動");
+                updateAllBattleUI();
+            } else if (checkLifeSlimeRevive(activeEnemy, battleState.enemyTeam, false)) {
                 updateAllBattleUI();
             } else {
                 checkDeathCounter(activeEnemy, activePlayer);
@@ -1369,6 +1514,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (enemy.rarity === 'common') card.classList.add('rarity-common');
             else if (enemy.rarity === 'uncommon') card.classList.add('rarity-uncommon');
             else if (enemy.rarity === 'rare') card.classList.add('rarity-rare');
+            else if (enemy.rarity === 'epic') card.classList.add('rarity-epic');
+            else if (enemy.rarity === 'legendary') card.classList.add('rarity-legendary');
 
             const img = document.createElement('img');
             img.src = enemy.image;
