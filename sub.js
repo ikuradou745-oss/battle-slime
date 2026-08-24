@@ -1,5 +1,34 @@
 // ============================================================================
+// オーディオ管理 (BGM, SE) ※フリー音源のURLを使用
+// ============================================================================
+const AudioManager = {
+    bgm: new Audio('[https://cdn.pixabay.com/audio/2022/01/18/audio_d0a13f69d2.mp3](https://cdn.pixabay.com/audio/2022/01/18/audio_d0a13f69d2.mp3)'),
+    click: new Audio('[https://cdn.pixabay.com/audio/2021/08/04/audio_0625c1539c.mp3](https://cdn.pixabay.com/audio/2021/08/04/audio_0625c1539c.mp3)'),
+    hit: new Audio('[https://cdn.pixabay.com/audio/2022/03/10/audio_c8c8a73467.mp3](https://cdn.pixabay.com/audio/2022/03/10/audio_c8c8a73467.mp3)'),
+    win: new Audio('[https://cdn.pixabay.com/audio/2021/08/04/audio_bb630cc098.mp3](https://cdn.pixabay.com/audio/2021/08/04/audio_bb630cc098.mp3)'),
+    lose: new Audio('[https://cdn.pixabay.com/audio/2021/08/04/audio_88c42a2757.mp3](https://cdn.pixabay.com/audio/2021/08/04/audio_88c42a2757.mp3)'),
+    playSE: function(name) {
+        if(this[name]) {
+            this[name].currentTime = 0;
+            this[name].play().catch(() => {});
+        }
+    },
+    initBGM: function() {
+        this.bgm.loop = true;
+        this.bgm.volume = 0.3;
+        const playBGM = () => {
+            if(this.bgm.paused) {
+                this.bgm.play().catch(() => {});
+            }
+            document.removeEventListener('click', playBGM);
+        };
+        document.addEventListener('click', playBGM);
+    }
+};
+
+// ============================================================================
 // キャラクターデータ
+// コモンから順に強くなる：common(1), uncommon(2), rare(3), legend(4)
 // ============================================================================
 
 const characterDatabase = [
@@ -27,7 +56,7 @@ const characterDatabase = [
         rarity: "uncommon",
         hp: 10,
         attack: 1,
-        ability: "相手を3ターン毒状態にする（毒状態になると毎ターン1ダメージ喰らいます。）",
+        ability: "相手を3ターン毒状態にする（毎ターン1ダメージ）",
         image: "./gazou/グリーンスライム.png"
     },
     {
@@ -59,44 +88,35 @@ const characterDatabase = [
     },
     {
         id: "slime_07",
-        name: "スライムシールド",
+        name: "ライフスライム",
         rarity: "rare",
         hp: 20,
         attack: 0.5,
-        ability: "3ターンに1回、攻撃をせずに1ターン「守り」の体制に入り、ダメージを50%カットする。",
-        image: "./gazou/slimeshield.png"
+        ability: "HPが高いタフなスライム。生き残りを助ける。",
+        image: "./gazou/lifeslime.png"
     },
     {
         id: "slime_08",
-        name: "水晶スライム",
+        name: "マネースライム",
         rarity: "rare",
-        hp: 12,
-        attack: 1.1,
-        ability: "攻撃した時、相手を2ターンに1度「氷」状態にする（攻撃力25%減少、3ターン目は行動不能になる）。",
-        image: "./gazou/suisyouslime.png"
+        hp: 1,
+        attack: 0.1,
+        ability: "装備しているだけで、試合に勝った時もらえるお金が倍になる。",
+        image: "./gazou/moneyslime.png"
     },
     {
         id: "slime_09",
-        name: "飛行スライム",
-        rarity: "legendary",
-        hp: 10.5,
-        attack: 2.5,
-        ability: "2ターンに1回攻撃を回避する。4ターンに1回上から落下する攻撃を行い、ダメージが2倍になる。",
-        image: "./gazou/flyingslime.png"
-    },
-    {
-        id: "slime_10",
-        name: "ライフスライム",
-        rarity: "epic",
-        hp: 15,
-        attack: 1.2,
-        ability: "3ターンに1度、最大HPの18%を回復する。一度だけ、死亡した仲間をHP1で復活させる（手持ちにいるだけで発動）。",
-        image: "./gazou/lifeslime.png"
+        name: "ハンマースライム",
+        rarity: "legend",
+        hp: 13.5,
+        attack: 0.8,
+        ability: "最初のターン、HPが8の壁をスポーンさせる。壁が壊れたら3ターン後にもう一度壁を設置する。",
+        image: "./gazou/hammerslime.png"
     }
 ];
 
 // ============================================================================
-// タイピング用辞書データ (ローマ字入力完全一致用)
+// タイピング用辞書データ
 // ============================================================================
 const typingWords = [
     { jp: "すらいむ", en: "suraimu" },
@@ -111,7 +131,6 @@ const typingWords = [
 // アニメーション用ヘルパー関数と動的CSS
 // ============================================================================
 
-// レーザーアニメーション
 function playLaserAnimation(attackerDom, defenderDom, speed) {
     if (!attackerDom || !defenderDom) return;
     const aRect = attackerDom.getBoundingClientRect();
@@ -145,7 +164,6 @@ function playLaserAnimation(attackerDom, defenderDom, speed) {
     }, 300 / speed);
 }
 
-// 切りつけアニメーション
 function playSlashAnimation(targetDom, speed) {
     if (!targetDom) return;
     const tRect = targetDom.getBoundingClientRect();
@@ -166,23 +184,6 @@ function playSlashAnimation(targetDom, speed) {
     }, 300 / speed);
 }
 
-// 落下攻撃アニメーション
-function playJumpAttackAnimation(attackerDom, speed) {
-    if (!attackerDom) return;
-    attackerDom.style.transition = `transform ${0.2 / speed}s ease-out`;
-    attackerDom.style.transform = `translateY(-150px) scale(1.2)`;
-    
-    setTimeout(() => {
-        attackerDom.style.transition = `transform ${0.1 / speed}s ease-in`;
-        attackerDom.style.transform = `translateY(20px) scale(1.1)`; 
-        setTimeout(() => {
-            attackerDom.style.transition = `transform ${0.2 / speed}s ease-out`;
-            attackerDom.style.transform = `translateY(0) scale(1)`; 
-        }, 100 / speed);
-    }, 200 / speed);
-}
-
-// 動的CSSの追加
 const animStyle = document.createElement('style');
 animStyle.textContent = `
     .laser-beam {
