@@ -1,9 +1,3 @@
-// コンソールの無効化
-console.log = function() {};
-console.error = function() {};
-console.warn = function() {};
-console.info = function() {};
-
 // ============================================================================
 // システム管理クラス群 (メモリ維持対象)
 // ============================================================================
@@ -16,6 +10,7 @@ class GameDataManager {
     loadData() {
         this.playerName = localStorage.getItem('playerName') || null;
         
+        // 初期状態の読み込み。なければスライム(ID:slime_01)1体のみ所持・装備
         const savedOwned = localStorage.getItem('ownedSlimes');
         this.ownedSlimes = savedOwned ? JSON.parse(savedOwned) : ["slime_01"];
         
@@ -25,14 +20,13 @@ class GameDataManager {
         const savedFirstBattle = localStorage.getItem('isFirstBattle');
         this.isFirstBattle = savedFirstBattle === null ? true : (savedFirstBattle === 'true');
 
+        // 連勝記録の読み込み
         const savedStreak = localStorage.getItem('winStreak');
         this.winStreak = savedStreak ? parseInt(savedStreak) : 0;
 
+        // プロフィールの読み込み (14x14=196配列)
         const savedProfile = localStorage.getItem('playerProfile');
         this.playerProfile = savedProfile ? JSON.parse(savedProfile) : Array(196).fill('transparent');
-
-        const savedMoney = localStorage.getItem('money');
-        this.money = savedMoney ? parseInt(savedMoney) : 0;
     }
 
     savePlayerName(name) {
@@ -46,7 +40,6 @@ class GameDataManager {
         localStorage.setItem('isFirstBattle', this.isFirstBattle);
         localStorage.setItem('winStreak', this.winStreak);
         localStorage.setItem('playerProfile', JSON.stringify(this.playerProfile));
-        localStorage.setItem('money', this.money);
     }
 
     getPlayerName() {
@@ -55,7 +48,7 @@ class GameDataManager {
 
     resetAllData() {
         localStorage.clear();
-        this.loadData(); 
+        this.loadData(); // 初期状態に戻す
     }
 }
 
@@ -64,7 +57,7 @@ class BrainrotCollectionService {
         this.collectionData = [];
     }
     logCollection(item) {
-        // console.log(`[BrainrotCollectionService] Collected: ${item}`);
+        console.log(`[BrainrotCollectionService] Collected: ${item}`);
     }
 }
 
@@ -74,7 +67,7 @@ class BrainrotCarryService {
     }
     updateCarryStatus(status) {
         this.carryStatus = status;
-        // console.log(`[BrainrotCarryService] Status updated to: ${status}`);
+        console.log(`[BrainrotCarryService] Status updated to: ${status}`);
     }
 }
 
@@ -104,8 +97,6 @@ const carryService = new BrainrotCarryService();
 const moneyController = new MoneyDisplayController('money-display');
 
 document.addEventListener('DOMContentLoaded', () => {
-    AudioManager.initBGM();
-
     // ---- 画面要素 ----
     const screenNameInput = document.getElementById('screen-name-input');
     const screenHome = document.getElementById('screen-home');
@@ -151,6 +142,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnUpdateName = document.getElementById('btn-update-name');
     const btnCloseSettings = document.getElementById('btn-close-settings');
 
+    const modalCharaDetail = document.getElementById('modal-chara-detail');
+    const btnCloseDetail = document.getElementById('btn-close-detail');
+
     const modalMessage = document.getElementById('modal-message');
     const messageText = document.getElementById('message-text');
     const btnCloseMessage = document.getElementById('btn-close-message');
@@ -160,9 +154,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const modalResetStep1 = document.getElementById('modal-reset-step1');
     const btnResetYes1 = document.getElementById('btn-reset-yes1');
     const btnResetCancel1 = document.getElementById('btn-reset-cancel1');
+    
     const modalResetStep2 = document.getElementById('modal-reset-step2');
     const resetCountdownText = document.getElementById('reset-countdown-text');
     const btnResetNext2 = document.getElementById('btn-reset-next2');
+    
     const modalResetStep3 = document.getElementById('modal-reset-step3');
     const resetTargetName = document.getElementById('reset-target-name');
     const resetNameInput = document.getElementById('reset-name-input');
@@ -180,24 +176,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const modalProfileEdit = document.getElementById('modal-profile-edit');
     const btnCloseProfile = document.getElementById('btn-close-profile');
     const btnSaveProfile = document.getElementById('btn-save-profile');
-
-    // ログインユーザー・ショップUI関連
-    const btnLoginUsers = document.getElementById('btn-login-users');
-    const modalLoginUsers = document.getElementById('modal-login-users');
-    const btnCloseLoginUsers = document.getElementById('btn-close-login-users');
-    const tabCurrentLogin = document.getElementById('tab-current-login');
-    const tabTodayLogin = document.getElementById('tab-today-login');
-    const loginUsersContent = document.getElementById('login-users-content');
-
-    const modalShop = document.getElementById('modal-shop');
-    const btnCloseShop = document.getElementById('btn-close-shop');
-    const btnBuyMoneySlime = document.getElementById('btn-buy-money-slime');
-    const btnBuyHammerSlime = document.getElementById('btn-buy-hammer-slime');
-
-    // ボタンクリック時のSE設定
-    document.querySelectorAll('.btn, .settings-icon, .mode-btn').forEach(el => {
-        el.addEventListener('click', () => AudioManager.playSE('click'));
-    });
 
     // ========================================================================
     // 基本関数
@@ -218,7 +196,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     function initGame() {
-        moneyController.currentMoney = gameData.money;
         moneyController.updateDisplay();
         
         if (gameData.getPlayerName()) {
@@ -299,74 +276,210 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // ログインユーザーUI処理
-    btnLoginUsers.addEventListener('click', () => {
-        modalLoginUsers.classList.add('active');
-    });
-    btnCloseLoginUsers.addEventListener('click', () => {
-        modalLoginUsers.classList.remove('active');
-    });
-    tabCurrentLogin.addEventListener('click', () => {
-        tabCurrentLogin.classList.replace('btn-green', 'btn-blue');
-        tabTodayLogin.classList.replace('btn-blue', 'btn-green');
-        loginUsersContent.innerHTML = '<span style="display:block;margin-bottom:10px;font-size:18px;color:#000;">現在ログインしている人</span>準備中！';
-    });
-    tabTodayLogin.addEventListener('click', () => {
-        tabTodayLogin.classList.replace('btn-green', 'btn-blue');
-        tabCurrentLogin.classList.replace('btn-blue', 'btn-green');
-        loginUsersContent.innerHTML = '<span style="display:block;margin-bottom:10px;font-size:18px;color:#000;">今日ログインした人</span>準備中！';
-    });
-
-    // ショップUI処理
-    btnShop.addEventListener('click', () => {
-        modalShop.classList.add('active');
-    });
-    btnCloseShop.addEventListener('click', () => {
-        modalShop.classList.remove('active');
-    });
-
-    btnBuyMoneySlime.addEventListener('click', () => {
-        if (gameData.money >= 15000) {
-            gameData.money -= 15000;
-            gameData.ownedSlimes.push('slime_08');
-            gameData.saveGameData();
-            moneyController.currentMoney = gameData.money;
-            moneyController.updateDisplay();
-            showMessage('マネースライムを購入しました！<br>装備画面からセットしてね！');
-        } else {
-            showMessage('お金が足りません！');
-        }
-    });
-
-    btnBuyHammerSlime.addEventListener('click', () => {
-        if (gameData.money >= 35000) {
-            gameData.money -= 35000;
-            gameData.ownedSlimes.push('slime_09');
-            gameData.saveGameData();
-            moneyController.currentMoney = gameData.money;
-            moneyController.updateDisplay();
-            showMessage('ハンマースライムを購入しました！<br>装備画面からセットしてね！');
-        } else {
-            showMessage('お金が足りません！');
-        }
-    });
-
     // --- プロフィールデモ機能とエディタ ---
     let currentProfileColor = '#000000';
     let tempProfileData = Array(196).fill('transparent');
     let isDrawing = false;
 
+    // カラーマップ
     const colorCodeMap = {
         '.': 'transparent', 'B': '#3498DB', 'R': '#E74C3C', 'G': '#2ECC71',
         'Y': '#F1C40F', 'K': '#000000', 'W': '#FFFFFF', 'M': '#9B59B6',
         'O': '#E67E22', 'C': '#87CEEB', 'S': '#BDC3C7'
     };
 
+    // 10個のデモプロフィールの定義（14x14の文字列を配列に変換）
     const demoProfiles = [
-        { name: "スライム", pattern: ["..............","..............","..............","..............",".....BBBB.....","...BBBBBBBB...","..BBB.BB.BBB..",".BBBB.BB.BBBB.",".BBBBBBBBBBBB.",".BBBBBBBBBBBB.",".BBBBBBBBBBBB.","..BBBBBBBBBB..","..............",".............."] },
-        { name: "ハート", pattern: ["..............","..............","..RRR....RRR..",".RRRRR..RRRRR.",".RRRRRRRRRRRR.",".RRRRRRRRRRRR.","..RRRRRRRRRR..","...RRRRRRRR...","....RRRRRR....",".....RRRR.....","......RR......","..............","..............",".............."] },
-        { name: "剣", pattern: [".............S","............SS","...........SS.","..........SS..",".........SS...","........SS....",".......SS.....","......SS......",".....SS.......","..KKSS........",".KKKK.........","K.KK..........","..............",".............."] },
-        { name: "星", pattern: ["..............","......YY......","......YY......",".....YYYY.....","..YYYYYYYYYY..","...YYYYYYYY...","....YYYYYY....","....YYYYYY....","...YYY..YYY...","..YYY....YYY..","..YY......YY..","..............","..............",".............."] }
+        {
+            name: "スライム",
+            pattern: [
+                "..............",
+                "..............",
+                "..............",
+                "..............",
+                ".....BBBB.....",
+                "...BBBBBBBB...",
+                "..BBB.BB.BBB..",
+                ".BBBB.BB.BBBB.",
+                ".BBBBBBBBBBBB.",
+                ".BBBBBBBBBBBB.",
+                ".BBBBBBBBBBBB.",
+                "..BBBBBBBBBB..",
+                "..............",
+                ".............."
+            ]
+        },
+        {
+            name: "ハート",
+            pattern: [
+                "..............",
+                "..............",
+                "..RRR....RRR..",
+                ".RRRRR..RRRRR.",
+                ".RRRRRRRRRRRR.",
+                ".RRRRRRRRRRRR.",
+                "..RRRRRRRRRR..",
+                "...RRRRRRRR...",
+                "....RRRRRR....",
+                ".....RRRR.....",
+                "......RR......",
+                "..............",
+                "..............",
+                ".............."
+            ]
+        },
+        {
+            name: "剣",
+            pattern: [
+                ".............S",
+                "............SS",
+                "...........SS.",
+                "..........SS..",
+                ".........SS...",
+                "........SS....",
+                ".......SS.....",
+                "......SS......",
+                ".....SS.......",
+                "..KKSS........",
+                ".KKKK.........",
+                "K.KK..........",
+                "..............",
+                ".............."
+            ]
+        },
+        {
+            name: "星",
+            pattern: [
+                "..............",
+                "......YY......",
+                "......YY......",
+                ".....YYYY.....",
+                "..YYYYYYYYYY..",
+                "...YYYYYYYY...",
+                "....YYYYYY....",
+                "....YYYYYY....",
+                "...YYY..YYY...",
+                "..YYY....YYY..",
+                "..YY......YY..",
+                "..............",
+                "..............",
+                ".............."
+            ]
+        },
+        {
+            name: "ポーション",
+            pattern: [
+                "..............",
+                ".....KKKK.....",
+                ".....KWWK.....",
+                ".....KWWK.....",
+                "....KMMMMK....",
+                "...KMMMMMMK...",
+                "..KMMMMMMMMK..",
+                "..KMMMMMMMMK..",
+                "..KMMMMMMMMK..",
+                "..KMMMMMMMMK..",
+                "...KMMMMMMK...",
+                "....KKKKKK....",
+                "..............",
+                ".............."
+            ]
+        },
+        {
+            name: "炎",
+            pattern: [
+                "..............",
+                ".......R......",
+                "......RR......",
+                ".....RRRO.....",
+                "....RRROO.....",
+                "...RRROOOO....",
+                "..RRRROOOOO...",
+                "..RRRROOOOOO..",
+                "..RRRROOYOOO..",
+                "...RRROYYOO...",
+                "....RROOOO....",
+                ".....RRRR.....",
+                "..............",
+                ".............."
+            ]
+        },
+        {
+            name: "顔文字",
+            pattern: [
+                "..............",
+                "..............",
+                "..............",
+                "....K....K....",
+                "....K....K....",
+                "..............",
+                "..............",
+                "..............",
+                "...K......K...",
+                "...K......K...",
+                "....KKKKKK....",
+                "..............",
+                "..............",
+                ".............."
+            ]
+        },
+        {
+            name: "葉っぱ",
+            pattern: [
+                "..............",
+                ".......G......",
+                "......GGG.....",
+                ".....GGGGG....",
+                "....GGGGGG....",
+                "...GGGGGGG....",
+                "..GGGGGGGG....",
+                "..GGGGGGG.....",
+                "..GGGGGG......",
+                "...GGGG.......",
+                "....GG........",
+                "....G.........",
+                "..............",
+                ".............."
+            ]
+        },
+        {
+            name: "雲",
+            pattern: [
+                "..............",
+                "..............",
+                "..............",
+                "..............",
+                "......CCC.....",
+                "....CCCCCCC...",
+                "..CCCCCCCCCC..",
+                ".CCCCCCCCCCCC.",
+                ".CCCCCCCCCCCC.",
+                "..CCCCCCCCCC..",
+                "..............",
+                "..............",
+                "..............",
+                ".............."
+            ]
+        },
+        {
+            name: "市松模様",
+            pattern: [
+                "K.K.K.K.K.K.K.",
+                ".K.K.K.K.K.K.K",
+                "K.K.K.K.K.K.K.",
+                ".K.K.K.K.K.K.K",
+                "K.K.K.K.K.K.K.",
+                ".K.K.K.K.K.K.K",
+                "K.K.K.K.K.K.K.",
+                ".K.K.K.K.K.K.K",
+                "K.K.K.K.K.K.K.",
+                ".K.K.K.K.K.K.K",
+                "K.K.K.K.K.K.K.",
+                ".K.K.K.K.K.K.K",
+                "K.K.K.K.K.K.K.",
+                ".K.K.K.K.K.K.K"
+            ]
+        }
     ];
 
     function parseDemoPattern(patternArray) {
@@ -387,20 +500,21 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function initProfileEditor() {
+        // デモプロフィールのボタン生成
         const demoContainer = document.getElementById('demo-profiles-container');
         demoContainer.innerHTML = '';
-        demoProfiles.forEach((demo) => {
+        demoProfiles.forEach((demo, idx) => {
             const btn = document.createElement('button');
             btn.className = 'btn btn-blue btn-small';
             btn.textContent = demo.name;
             btn.addEventListener('click', () => {
-                AudioManager.playSE('click');
                 tempProfileData = parseDemoPattern(demo.pattern);
                 updateGridDisplay();
             });
             demoContainer.appendChild(btn);
         });
 
+        // カラーパレットの設定
         const paletteColors = ['#000000', '#FFFFFF', '#E74C3C', '#3498DB', '#2ECC71', '#F1C40F', '#9B59B6', '#E67E22', '#87CEEB', 'transparent'];
         const paletteContainer = document.getElementById('color-palette');
         paletteContainer.innerHTML = '';
@@ -420,7 +534,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             colorBtn.addEventListener('click', () => {
-                AudioManager.playSE('click');
                 currentProfileColor = color;
                 Array.from(paletteContainer.children).forEach(btn => {
                     btn.style.transform = 'scale(1)';
@@ -433,6 +546,7 @@ document.addEventListener('DOMContentLoaded', () => {
             paletteContainer.appendChild(colorBtn);
         });
 
+        // お絵かきグリッドの設定
         const grid = document.getElementById('profile-grid');
         grid.innerHTML = '';
         
@@ -589,6 +703,10 @@ document.addEventListener('DOMContentLoaded', () => {
         showMessage('ストーリーモードは<br>開発中です！');
     });
 
+    btnShop.addEventListener('click', () => {
+        showMessage('ショップは<br>準備中です！');
+    });
+
     // ========================================================================
     // 装備画面のロジック (最大4枠, 同キャラ2体まで)
     // ========================================================================
@@ -655,13 +773,12 @@ document.addEventListener('DOMContentLoaded', () => {
         if (chara.rarity === 'common') card.classList.add('rarity-common');
         else if (chara.rarity === 'uncommon') card.classList.add('rarity-uncommon');
         else if (chara.rarity === 'rare') card.classList.add('rarity-rare');
-        else if (chara.rarity === 'legend') card.classList.add('rarity-legend');
         
         const img = document.createElement('img');
         img.src = chara.image;
         img.alt = chara.name;
         img.onerror = function() {
-            this.src = 'data:image/svg+xml;charset=UTF-8,%3Csvg xmlns="[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)" width="60" height="60" viewBox="0 0 60 60"%3E%3Crect fill="%23ddd" width="60" height="60"/%3E%3Ctext fill="%23555" x="30" y="30" font-family="sans-serif" font-size="10" text-anchor="middle" dy="3"%3ENo Image%3C/text%3E%3C/svg%3E';
+            this.src = 'data:image/svg+xml;charset=UTF-8,%3Csvg xmlns="http://www.w3.org/2000/svg" width="60" height="60" viewBox="0 0 60 60"%3E%3Crect fill="%23ddd" width="60" height="60"/%3E%3Ctext fill="%23555" x="30" y="30" font-family="sans-serif" font-size="10" text-anchor="middle" dy="3"%3ENo Image%3C/text%3E%3C/svg%3E';
         };
 
         const nameSpan = document.createElement('span');
@@ -677,7 +794,6 @@ document.addEventListener('DOMContentLoaded', () => {
         card.appendChild(nameSpan);
 
         card.addEventListener('click', () => {
-            AudioManager.playSE('click');
             if (isEquippedArea) {
                 if (gameData.equippedSlimes.length > 1) {
                     gameData.equippedSlimes.splice(equipIndex, 1);
@@ -724,7 +840,7 @@ document.addEventListener('DOMContentLoaded', () => {
         isActive: false
     };
 
-    const rarityRanks = ['common', 'uncommon', 'rare', 'legend'];
+    const rarityRanks = ['common', 'uncommon', 'rare', 'epic', 'legendary'];
 
     function getUpgradeProb(currentRarityRank, winStreak) {
         let base = 10 - currentRarityRank;
@@ -770,33 +886,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 1000 / currentBattleSpeed);
     }
 
-    function spawnWall(parentId) {
-        let wall = {
-            id: 'wall_01',
-            name: '壁',
-            rarity: 'common',
-            hp: 8,
-            currentHp: 8,
-            attack: 0,
-            isPlayer: true,
-            isWall: true,
-            parentId: parentId,
-            image: 'data:image/svg+xml;charset=UTF-8,%3Csvg xmlns="[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)" width="80" height="80" viewBox="0 0 80 80"%3E%3Crect width="80" height="80" fill="%238B4513"/%3E%3Cpath d="M0,20 L80,20 M0,40 L80,40 M0,60 L80,60 M20,0 L20,20 M60,0 L60,20 M40,20 L40,40 M20,40 L20,60 M60,40 L60,60 M40,60 L40,80" stroke="%23A0522D" stroke-width="4"/%3E%3C/svg%3E',
-            dom: null,
-            poisonTurns: 0, burnTurns: 0, stunTurns: 0, attackCount: 0
-        };
-        wall.dom = createBattleIcon(wall, `player-wall-${Date.now()}`);
-        battleState.playerTeam.push(wall);
-        battlePlayerTeam.appendChild(wall.dom);
-        showAbilityText(wall.dom, "壁出現!");
-        updateAllBattleUI();
-    }
-
     function initBattle() {
         battlePlayerTeam.innerHTML = "";
         battleEnemyTeam.innerHTML = "";
         
-        battleState.playerTeam = gameData.equippedSlimes.map((id, index) => {
+        battleState.playerTeam = gameData.equippedSlimes.map(id => {
             const base = characterDatabase.find(c => c.id === id);
             return { 
                 ...base, 
@@ -809,17 +903,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 revived: false, 
                 countered: false,
                 isPlayer: true, 
-                parentId: id + '_' + index,
                 dom: null 
             };
-        });
-
-        // ハンマースライムがいれば壁を初回スポーン
-        battleState.playerTeam.forEach(chara => {
-            if (chara.id === 'slime_09') {
-                chara.wallRespawnTimer = 0;
-                spawnWall(chara.parentId);
-            }
         });
 
         battleState.enemyTeam = [];
@@ -831,10 +916,10 @@ document.addEventListener('DOMContentLoaded', () => {
             gameData.isFirstBattle = false;
             gameData.saveGameData();
         } else {
-            const enemyCount = battleState.playerTeam.filter(c => !c.isWall).length;
+            const enemyCount = battleState.playerTeam.length;
             
             for (let i = 0; i < enemyCount; i++) {
-                let playerChara = battleState.playerTeam.filter(c => !c.isWall)[i];
+                let playerChara = battleState.playerTeam[i];
                 let currentRankIndex = rarityRanks.indexOf(playerChara.rarity);
                 if(currentRankIndex === -1) currentRankIndex = 0;
                 
@@ -844,9 +929,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (Math.random() * 100 < prob) {
                     targetRankIndex++;
                 }
-                if (targetRankIndex >= rarityRanks.length) targetRankIndex = rarityRanks.length - 1;
                 
-                let targetRarity = rarityRanks[targetRankIndex];
+                let targetRarity = rarityRanks[targetRankIndex] || rarityRanks[rarityRanks.length - 1];
                 let possibleEnemies = characterDatabase.filter(c => c.rarity === targetRarity);
                 
                 while (possibleEnemies.length === 0 && targetRankIndex > 0) {
@@ -885,11 +969,9 @@ document.addEventListener('DOMContentLoaded', () => {
             battleEnemyTeam.appendChild(chara.dom);
         });
 
-        battleState.playerTeam.forEach((chara) => {
-            if (!chara.isWall) {
-                chara.dom = createBattleIcon(chara, `player-${chara.parentId}`);
-                battlePlayerTeam.appendChild(chara.dom);
-            }
+        battleState.playerTeam.forEach((chara, i) => {
+            chara.dom = createBattleIcon(chara, `player-${i}`);
+            battlePlayerTeam.appendChild(chara.dom);
         });
 
         battleState.pIndex = 0;
@@ -940,7 +1022,6 @@ document.addEventListener('DOMContentLoaded', () => {
     function updateAllBattleUI() {
         battleState.playerTeam.forEach(chara => {
             const dom = chara.dom;
-            if (!dom) return;
             const stats = dom.querySelector('.battle-stats');
             if (chara.currentHp <= 0) {
                 dom.classList.add('fainted');
@@ -981,7 +1062,6 @@ document.addEventListener('DOMContentLoaded', () => {
             showAbilityText(deadChara.dom, "死亡時カウンター!");
             playSlashAnimation(killerChara.dom, currentBattleSpeed);
             killerChara.currentHp -= deadChara.attack * 3;
-            AudioManager.playSE('hit');
             
             if (killerChara.currentHp <= 0 && killerChara.id === 'slime_01' && !killerChara.revived) {
                 killerChara.currentHp = killerChara.hp / 2;
@@ -1013,25 +1093,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         let activePlayer = battleState.playerTeam[battleState.pIndex];
         let activeEnemy = battleState.enemyTeam[battleState.eIndex];
-
-        // 壁の場合はターンを即スキップ
-        if (activePlayer.isWall) {
-            battleState.pIndex++;
-            startPlayerTurn();
-            return;
-        }
-
-        // ハンマースライムの壁再生成チェック
-        if (activePlayer.id === 'slime_09' && activePlayer.currentHp > 0) {
-            let myWall = battleState.playerTeam.find(c => c.isWall && c.parentId === activePlayer.parentId && c.currentHp > 0);
-            if (!myWall) {
-                activePlayer.wallRespawnTimer = (activePlayer.wallRespawnTimer || 0) + 1;
-                if (activePlayer.wallRespawnTimer >= 3) {
-                    spawnWall(activePlayer.parentId);
-                    activePlayer.wallRespawnTimer = 0;
-                }
-            }
-        }
 
         if (activePlayer.poisonTurns > 0) {
             activePlayer.currentHp -= 1;
@@ -1129,14 +1190,6 @@ document.addEventListener('DOMContentLoaded', () => {
         let attacker = isPlayerAttacking ? battleState.playerTeam[battleState.pIndex] : battleState.enemyTeam[battleState.eIndex];
         let defender = isPlayerAttacking ? battleState.enemyTeam[battleState.eIndex] : battleState.playerTeam[battleState.pIndex];
 
-        // 敵の攻撃時、壁が最前線にいれば身代わりにする
-        if (!isPlayerAttacking) {
-            let activeWall = battleState.playerTeam.find(c => c.isWall && c.currentHp > 0);
-            if (activeWall) {
-                defender = activeWall;
-            }
-        }
-
         attacker.attackCount = (attacker.attackCount || 0) + 1;
         let finalDamage = attacker.attack;
 
@@ -1170,12 +1223,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (isLaserAttack) {
             playLaserAnimation(attacker.dom, defender.dom, currentBattleSpeed);
-            setTimeout(() => AudioManager.playSE('hit'), 150 / currentBattleSpeed);
         } else {
             const animClass = isPlayerAttacking ? 'attack-move-right' : 'attack-move-left';
             attacker.dom.classList.add(animClass);
             setTimeout(() => attacker.dom.classList.remove(animClass), 200 / currentBattleSpeed);
-            setTimeout(() => AudioManager.playSE('hit'), 150 / currentBattleSpeed);
         }
 
         setTimeout(() => {
@@ -1278,49 +1329,18 @@ document.addEventListener('DOMContentLoaded', () => {
         
         if (isWin) {
             gameData.winStreak++; 
-            
-            // お金の計算処理
-            let aliveSlimesCount = battleState.playerTeam.filter(c => !c.isWall && c.currentHp > 0).length;
-            let enemyRarityValueSum = battleState.enemyTeam.reduce((sum, e) => {
-                if (e.rarity === 'common') return sum + 1;
-                if (e.rarity === 'uncommon') return sum + 2;
-                if (e.rarity === 'rare') return sum + 3;
-                if (e.rarity === 'legend') return sum + 4;
-                return sum + 1;
-            }, 0);
-            
-            let rewardMoney = aliveSlimesCount * enemyRarityValueSum * 100;
-            
-            // マネースライムの能力処理 (倍にする)
-            let moneySlimeCount = battleState.playerTeam.filter(c => c.id === 'slime_08').length;
-            for(let i = 0; i < moneySlimeCount; i++) {
-                rewardMoney *= 2;
-            }
-            
-            gameData.money += rewardMoney;
-            gameData.saveGameData();
-            moneyController.currentMoney = gameData.money;
-            moneyController.updateDisplay();
-
-            AudioManager.playSE('win');
-            
-            battleMessage.style.display = 'block';
-            battleMessage.innerHTML = `WIN!<br>所持金を <span style="color:#F1C40F; text-shadow: 1px 1px 0 #000;">${rewardMoney}円</span> ゲット！`;
-
-            setTimeout(() => {
-                showRewardScreen();
-            }, 2000 / currentBattleSpeed);
-            
         } else {
             gameData.winStreak = 0; 
-            gameData.saveGameData();
-
-            AudioManager.playSE('lose');
-
-            setTimeout(() => {
-                modalLose.classList.add('active');
-            }, 1000 / currentBattleSpeed);
         }
+        gameData.saveGameData();
+
+        setTimeout(() => {
+            if (isWin) {
+                showRewardScreen();
+            } else {
+                modalLose.classList.add('active');
+            }
+        }, 1000 / currentBattleSpeed);
     }
 
     btnCloseLose.addEventListener('click', () => {
@@ -1349,7 +1369,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (enemy.rarity === 'common') card.classList.add('rarity-common');
             else if (enemy.rarity === 'uncommon') card.classList.add('rarity-uncommon');
             else if (enemy.rarity === 'rare') card.classList.add('rarity-rare');
-            else if (enemy.rarity === 'legend') card.classList.add('rarity-legend');
 
             const img = document.createElement('img');
             img.src = enemy.image;
@@ -1361,7 +1380,6 @@ document.addEventListener('DOMContentLoaded', () => {
             card.appendChild(nameSpan);
 
             card.addEventListener('click', () => {
-                AudioManager.playSE('click');
                 gameData.ownedSlimes.push(enemy.id);
                 gameData.saveGameData();
                 modalReward.classList.remove('active');
