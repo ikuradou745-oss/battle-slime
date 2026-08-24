@@ -4,13 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>バトルスライム</title>
-    <script>
-        // コンソール出力を無効化
-        console.log = function() {};
-        console.warn = function() {};
-        console.error = function() {};
-        console.info = function() {};
-    </script>
     <style>
         /* CSS変数の追加（バトル速度制御用） */
         :root {
@@ -208,364 +201,6 @@
             text-shadow: -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000;
         }
 
-        /* 装備画面・ショップ画面のスタイル */
-        .equip-container {
-            width: 90%;
-            height: 90%;
-            background-color: #A9DFBF;
-            border: 6px solid #000;
-            border-radius: 16px;
-            display: flex;
-            flex-direction: column;
-            padding: 20px;
-            box-sizing: border-box;
-            position: relative;
-        }
-
-        .close-btn {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            padding: 10px 20px;
-            font-size: 18px;
-            z-index: 10;
-        }
-
-        .section-title {
-            font-size: 24px;
-            border-bottom: 4px solid #000;
-            margin-bottom: 15px;
-            padding-bottom: 5px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .equipped-area {
-            flex: 1;
-            display: flex;
-            gap: 10px;
-            overflow-x: auto;
-            margin-bottom: 20px;
-            padding-bottom: 10px;
-        }
-
-        .owned-area {
-            flex: 2;
-            background-color: rgba(255, 255, 255, 0.5);
-            border: 4px solid #000;
-            border-radius: 8px;
-            padding: 15px;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .search-bar {
-            border: 4px solid #000;
-            border-radius: 6px;
-            padding: 10px;
-            font-size: 18px;
-            font-weight: bold;
-            margin-bottom: 15px;
-            outline: none;
-        }
-
-        .character-grid {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 15px;
-            overflow-y: auto;
-        }
-
-        .chara-card {
-            width: 110px;
-            height: 140px;
-            border: 4px solid #000;
-            border-radius: 8px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: space-between;
-            padding: 5px;
-            box-shadow: 0 4px 0 #000;
-            cursor: pointer;
-            box-sizing: border-box;
-            position: relative;
-            background-color: #FFF;
-        }
-        
-        .chara-card img {
-            width: 60px;
-            height: 60px;
-            object-fit: contain;
-            margin-top: 5px;
-        }
-
-        .chara-card .chara-name {
-            font-size: 13px;
-            text-align: center;
-            word-break: break-all;
-            background: rgba(255, 255, 255, 0.9);
-            border-radius: 4px;
-            padding: 2px 4px;
-            width: 100%;
-            box-sizing: border-box;
-            border: 2px solid #000;
-        }
-        
-        .chara-card .equip-status {
-            position: absolute;
-            top: -10px;
-            right: -10px;
-            background-color: #E74C3C;
-            color: #FFF;
-            border: 2px solid #000;
-            border-radius: 12px;
-            padding: 2px 8px;
-            font-size: 12px;
-            font-weight: bold;
-            display: none;
-        }
-        .chara-card.is-equipped .equip-status {
-            display: block;
-        }
-
-        .chara-slot {
-            min-width: 110px;
-            height: 140px;
-            background-color: rgba(0,0,0,0.1);
-            border: 4px dashed #000;
-            border-radius: 8px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 14px;
-            color: #333;
-        }
-
-        /* レアリティカラー設定 */
-        .rarity-common { background-color: #BDC3C7; } /* 灰色 */
-        .rarity-uncommon { background-color: #2ECC71; } /* 緑色 */
-        .rarity-rare { background-color: #3498DB; color: #FFF; } /* 青色 */
-        .rarity-legendary { background-color: #F1C40F; color: #000; box-shadow: 0 0 10px #F1C40F; } /* 黄色 */
-
-        /* バトル画面のスタイル */
-        #screen-battle {
-            justify-content: flex-start;
-        }
-
-        .battle-top-area {
-            width: 100%;
-            height: 25%;
-            background-color: #FFF;
-            border-bottom: 6px solid #指示に従い、`index.html`、`sub.js`、`main.js`の3ファイルに分割し、ご要望の機能（効果音・BGM、レアリティシステムの改修、ログインユーザー確認UI、お金システム、ショップ機能、新スライムの追加と特殊能力、コンソール無効化など）をすべて実装しました。コードの省略は一切行っていません。
-
-### 1. `index.html`
-
-```html
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>バトルスライム</title>
-    <style>
-        /* CSS変数の追加（バトル速度制御用） */
-        :root {
-            --battle-speed: 1;
-        }
-
-        /* 全体の基本設定（ブロスタ風・ポップで太い枠線のUI） */
-        body {
-            margin: 0;
-            padding: 0;
-            width: 100vw;
-            height: 100vh;
-            background-color: #87CEEB;
-            font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
-            font-weight: 900;
-            overflow: hidden;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            user-select: none;
-        }
-
-        /* 画面コンテナ */
-        .screen {
-            width: 100%;
-            height: 100%;
-            display: none;
-            position: absolute;
-            top: 0;
-            left: 0;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            background-color: #87CEEB;
-        }
-
-        .screen.active {
-            display: flex;
-        }
-
-        /* マッチメイキング画面専用設定 */
-        #screen-matchmaking {
-            background-color: #000;
-            color: #FFF;
-            z-index: 50;
-            opacity: 0;
-            transition: opacity 0.5s ease-in-out;
-        }
-
-        #screen-matchmaking h1 {
-            font-size: 40px;
-            text-shadow: 2px 2px 0 #333;
-        }
-
-        /* 汎用ボタン（太枠・シャドウ付き） */
-        .btn {
-            border: 4px solid #000;
-            border-radius: 8px;
-            padding: 15px 30px;
-            font-size: 24px;
-            font-weight: 900;
-            color: #000;
-            cursor: pointer;
-            box-shadow: 0 6px 0 #000;
-            transition: transform 0.1s, box-shadow 0.1s;
-            text-align: center;
-            background-color: #FFF;
-        }
-        
-        .btn:active {
-            transform: translateY(6px);
-            box-shadow: 0 0 0 #000;
-        }
-        
-        .btn:disabled {
-            background-color: #BDC3C7 !important;
-            color: #7F8C8D !important;
-            cursor: not-allowed;
-            transform: translateY(6px);
-            box-shadow: 0 0 0 #000;
-        }
-
-        .btn-yellow { background-color: #F1C40F; }
-        .btn-blue { background-color: #3498DB; color: #FFF; text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; }
-        .btn-green { background-color: #2ECC71; }
-        .btn-red { background-color: #E74C3C; color: #FFF; }
-        .btn-purple { background-color: #9B59B6; color: #FFF; text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; }
-        .btn-small { padding: 5px 10px; font-size: 14px; border-width: 2px; box-shadow: 0 3px 0 #000; }
-        .btn-small:active { transform: translateY(3px); box-shadow: 0 0 0 #000; }
-
-        /* 名前入力画面のスタイル */
-        #name-input-container {
-            background-color: #FFF;
-            border: 4px solid #000;
-            border-radius: 12px;
-            padding: 40px;
-            text-align: center;
-            box-shadow: 0 8px 0 #000;
-        }
-
-        #name-input-container h1 {
-            margin-top: 0;
-            font-size: 20px;
-        }
-
-        #player-name-input, .custom-input {
-            border: 4px solid #000;
-            border-radius: 6px;
-            padding: 10px;
-            font-size: 20px;
-            font-weight: bold;
-            width: 80%;
-            margin-bottom: 20px;
-            text-align: center;
-            outline: none;
-        }
-
-        /* ホーム画面のスタイル */
-        .top-bar {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            display: flex;
-            justify-content: space-between;
-            padding: 15px;
-            box-sizing: border-box;
-            z-index: 10;
-        }
-
-        .money-display {
-            background-color: #F1C40F;
-            border: 4px solid #000;
-            border-radius: 8px;
-            padding: 5px 15px;
-            font-size: 20px;
-            box-shadow: 0 4px 0 #000;
-        }
-
-        .player-info {
-            display: flex;
-            align-items: center;
-            background-color: #FFF;
-            border: 4px solid #000;
-            border-radius: 8px;
-            padding: 5px 15px;
-            box-shadow: 0 4px 0 #000;
-            gap: 10px;
-        }
-
-        .settings-icon {
-            font-size: 24px;
-            cursor: pointer;
-            transition: transform 0.2s;
-        }
-        .settings-icon:hover {
-            transform: scale(1.1);
-        }
-
-        .home-menu {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-            width: 300px;
-            z-index: 1;
-        }
-
-        /* プレイモード画面（全画面）のスタイル */
-        .play-mode-container {
-            display: flex;
-            gap: 40px;
-            justify-content: center;
-            align-items: center;
-            width: 100%;
-            padding: 20px;
-            box-sizing: border-box;
-        }
-
-        .mode-btn {
-            width: 350px;
-            height: 450px;
-            font-size: 40px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            border-radius: 20px;
-            flex-direction: column;
-            gap: 20px;
-        }
-
-        .mode-title {
-            font-size: 48px;
-            margin-bottom: 30px;
-            color: #FFF;
-            text-shadow: -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000;
-        }
-
         /* 装備画面のスタイル */
         .equip-container {
             width: 90%;
@@ -700,11 +335,10 @@
             color: #333;
         }
 
-        /* レアリティカラー設定 (修正版) */
+        /* レアリティカラー設定 */
         .rarity-common { background-color: #BDC3C7; } /* 灰色 */
         .rarity-uncommon { background-color: #2ECC71; } /* 緑色 */
         .rarity-rare { background-color: #3498DB; color: #FFF; } /* 青色 */
-        .rarity-legend { background-color: #F1C40F; color: #000; font-weight: 900; border: 4px solid #E67E22; } /* 黄色 */
 
         /* バトル画面のスタイル */
         #screen-battle {
@@ -724,13 +358,14 @@
             position: relative;
         }
 
+        /* ビルの背景を追加し、スライムを中央寄りに配置 */
         .battle-field-area {
             width: 100%;
             height: 55%;
             position: relative;
             display: flex;
-            justify-content: center;
-            gap: 150px;
+            justify-content: center; /* 変更: 中央寄せ */
+            gap: 150px; /* 変更: 中央寄せのための間隔 */
             align-items: flex-end;
             padding-bottom: 20px;
             box-sizing: border-box;
@@ -743,6 +378,7 @@
             background-color: #87CEEB; /* 空色 */
         }
 
+        /* 地面を道路風に改善 */
         .battle-ground-area {
             width: 100%;
             height: 20%;
@@ -766,31 +402,40 @@
         .team-container {
             display: flex;
             gap: 15px;
-            padding: 0;
+            padding: 0; /* 中央寄せ調整のためリセット */
             align-items: flex-end;
         }
 
-        #battle-enemy-team { justify-content: flex-start; }
-        #battle-player-team { justify-content: flex-end; }
+        /* 敵チームは左側。画像反転はimgタグに適用 */
+        #battle-enemy-team {
+            justify-content: flex-start;
+        }
+        #battle-player-team {
+            justify-content: flex-end;
+        }
 
+        /* バトル用キャラクターアイコン（背景・枠線なし） */
         .battle-chara {
             width: 80px;
             display: flex;
             flex-direction: column;
             align-items: center;
             position: relative;
+            /* 速度変数を適用 */
             transition: transform calc(0.3s / var(--battle-speed)) ease-in-out;
         }
 
-        .battle-chara img, .battle-chara svg {
+        .battle-chara img {
             width: 80px;
             height: 80px;
             object-fit: contain;
+            /* 背景や枠線を消す */
             background: transparent;
             border: none;
             box-shadow: none;
         }
 
+        /* 能力発動テキストのスタイル追加 */
         .ability-text {
             position: absolute;
             top: -30px;
@@ -807,6 +452,7 @@
             pointer-events: none;
             white-space: nowrap;
             z-index: 20;
+            /* 速度変数を適用 */
             transition: opacity calc(0.2s / var(--battle-speed)), transform calc(0.5s / var(--battle-speed));
         }
         .ability-text.show {
@@ -814,10 +460,12 @@
             transform: translateX(-50%) translateY(-25px);
         }
 
+        /* 敵の画像を左右反転 */
         #battle-enemy-team .battle-chara img {
             transform: scaleX(-1);
         }
 
+        /* バトル中のステータス表示 */
         .battle-stats {
             background-color: rgba(255, 255, 255, 0.9);
             border: 3px solid #000;
@@ -842,16 +490,43 @@
             white-space: nowrap;
         }
 
-        #typing-jp { font-size: 32px; margin-bottom: 10px; }
-        #typing-en { font-size: 40px; letter-spacing: 2px; }
-        .typed { color: #E74C3C; }
-        .untyped { color: #BDC3C7; }
-        #perfect-bonus-display { color: #E74C3C; font-size: 20px; margin-bottom: 5px; height: 24px; }
+        /* タイピングエリア UI */
+        #typing-jp {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+        #typing-en {
+            font-size: 40px;
+            letter-spacing: 2px;
+        }
+        .typed {
+            color: #E74C3C;
+        }
+        .untyped {
+            color: #BDC3C7;
+        }
+        #perfect-bonus-display {
+            color: #E74C3C;
+            font-size: 20px;
+            margin-bottom: 5px;
+            height: 24px;
+        }
 
-        .attack-move-right { transform: translateX(150px) translateY(-20px) scale(1.1); }
-        .attack-move-left { transform: translateX(-150px) translateY(-20px) scale(1.1); }
-        .damage-shake { animation: shake calc(0.3s / var(--battle-speed)); }
-        .fainted { opacity: 0.3; filter: grayscale(100%); }
+        /* アニメーション用クラス */
+        .attack-move-right {
+            transform: translateX(150px) translateY(-20px) scale(1.1);
+        }
+        .attack-move-left {
+            transform: translateX(-150px) translateY(-20px) scale(1.1);
+        }
+        .damage-shake {
+            /* 速度変数を適用 */
+            animation: shake calc(0.3s / var(--battle-speed));
+        }
+        .fainted {
+            opacity: 0.3;
+            filter: grayscale(100%);
+        }
 
         @keyframes shake {
             0% { transform: translateX(0); }
@@ -884,6 +559,7 @@
             box-shadow: 0 8px 0 #000;
         }
 
+        /* キャラクター詳細テキスト */
         .detail-text-box {
             font-size: 18px;
             text-align: left;
@@ -895,6 +571,7 @@
             border-radius: 8px;
         }
 
+        /* 報酬選択用グリッド */
         .reward-grid {
             display: flex;
             gap: 15px;
@@ -922,8 +599,7 @@
             <div class="player-info" style="display: flex; align-items: center; gap: 10px;">
                 <canvas id="display-profile-canvas" width="32" height="32" style="border: 2px solid #000; border-radius: 4px; background-color: #fff;"></canvas>
                 <span id="display-player-name">プロフィール：プレイヤー</span>
-                <span class="settings-icon" id="btn-login-users" title="ログインユーザー">👥</span>
-                <span class="settings-icon" id="btn-settings" title="設定">⚙️</span>
+                <span class="settings-icon" id="btn-settings">⚙️</span>
             </div>
         </div>
         <div class="home-menu">
@@ -950,19 +626,30 @@
 
     <!-- バトル画面 -->
     <div id="screen-battle" class="screen">
+        <!-- バトル速度変更ボタン -->
         <button id="btn-speed-toggle" class="btn btn-yellow" style="position: absolute; top: 15px; right: 15px; padding: 10px 20px; font-size: 18px; z-index: 100; box-shadow: 0 4px 0 #000;">1倍速</button>
+
+        <!-- タイピングスペース -->
         <div class="battle-top-area" id="typing-area">
             <div id="perfect-bonus-display"></div>
             <div id="typing-jp"></div>
             <div id="typing-en">
                 <span id="type-typed" class="typed"></span><span id="type-untyped" class="untyped"></span>
             </div>
-            <div id="battle-message" style="font-size:24px; margin-top:10px; display:none; line-height: 1.5; font-weight: bold;"></div>
+            <div id="battle-message" style="font-size:24px; margin-top:10px; display:none;"></div>
         </div>
+        
+        <!-- 戦闘フィールド -->
         <div class="battle-field-area">
-            <div class="team-container" id="battle-enemy-team"></div>
-            <div class="team-container" id="battle-player-team"></div>
+            <div class="team-container" id="battle-enemy-team">
+                <!-- 敵キャラ生成 -->
+            </div>
+            <div class="team-container" id="battle-player-team">
+                <!-- 味方キャラ生成 -->
+            </div>
         </div>
+        
+        <!-- 地面 -->
         <div class="battle-ground-area"></div>
     </div>
 
@@ -977,7 +664,9 @@
                 <span>装備しているキャラ (最大4体)</span>
                 <span style="font-size: 16px; color: #555;">タップして外す</span>
             </div>
-            <div class="equipped-area" id="equipped-list"></div>
+            <div class="equipped-area" id="equipped-list">
+                <!-- スロット生成 -->
+            </div>
 
             <div class="owned-area">
                 <div class="section-title">
@@ -985,63 +674,10 @@
                     <span style="font-size: 16px; color: #555;">タップして装備 (同キャラ最大2体)</span>
                 </div>
                 <input type="text" id="search-slime" class="search-bar" placeholder="名前を検索してスライムを探す...">
-                <div class="character-grid" id="owned-list"></div>
-            </div>
-        </div>
-    </div>
-
-    <!-- ログインユーザーモーダル -->
-    <div id="modal-login-users" class="modal-overlay">
-        <div class="modal-content" style="width: 80%; max-width: 400px; height: 350px;">
-            <h2 style="margin-top: 0;">ログインユーザー</h2>
-            <div style="display: flex; gap: 10px; justify-content: center; margin-bottom: 15px;">
-                <button class="btn btn-blue btn-small" id="tab-current-login" style="flex:1; font-size: 16px;">現在ログイン</button>
-                <button class="btn btn-green btn-small" id="tab-today-login" style="flex:1; font-size: 16px;">今日ログイン</button>
-            </div>
-            <div id="login-users-content" style="flex: 1; border: 4px solid #000; border-radius: 8px; padding: 10px; overflow-y: auto; text-align: center; display: flex; flex-direction: column; justify-content: center; font-size: 24px; color: #7F8C8D; background: #FFF;">
-                <span style="display:block;margin-bottom:10px;font-size:18px;color:#000;">現在ログインしている人</span>
-                準備中！
-            </div>
-            <button class="btn btn-red" id="btn-close-login-users" style="margin-top: 15px;">閉じる</button>
-        </div>
-    </div>
-
-    <!-- ショップモーダル -->
-    <div id="modal-shop" class="modal-overlay">
-        <div class="modal-content" style="width: 90%; max-width: 500px;">
-            <h2 style="margin-top: 0;">ショップ</h2>
-            <div style="display: flex; flex-direction: column; gap: 15px; overflow-y: auto; max-height: 60vh;">
-                <!-- マネースライム -->
-                <div style="border: 4px solid #000; border-radius: 8px; padding: 15px; background: #FFF; text-align: left;">
-                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
-                        <div>
-                            <strong style="font-size: 20px;">マネースライム</strong> <span style="background: #3498DB; color: #FFF; padding: 2px 5px; border-radius: 4px; font-size: 12px; font-weight: bold; border: 1px solid #000;">レア</span><br>
-                            <span style="font-size: 14px; color: #555;">❤️ HP: 1 / 🗡️ 攻撃力: 0.1</span>
-                        </div>
-                        <img src="./gazou/moneyslime.png" alt="" style="width: 40px; height: 40px; object-fit: contain;">
-                    </div>
-                    <div style="font-size: 14px; margin-bottom: 10px; background: #E8F8F5; padding: 8px; border-radius: 4px; border: 2px solid #000;">
-                        <strong>✨ 能力:</strong> 装備しているだけで、試合に勝った時もらえるお金が倍になる。
-                    </div>
-                    <button class="btn btn-yellow" id="btn-buy-money-slime" style="width: 100%; font-size: 18px; padding: 10px;">15,000円で購入</button>
-                </div>
-                
-                <!-- ハンマースライム -->
-                <div style="border: 4px solid #000; border-radius: 8px; padding: 15px; background: #FFF; text-align: left;">
-                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
-                        <div>
-                            <strong style="font-size: 20px;">ハンマースライム</strong> <span style="background: #F1C40F; color: #000; padding: 2px 5px; border-radius: 4px; font-size: 12px; font-weight: bold; border: 1px solid #000;">レジェンド</span><br>
-                            <span style="font-size: 14px; color: #555;">❤️ HP: 13.5 / 🗡️ 攻撃力: 0.8</span>
-                        </div>
-                        <img src="./gazou/hammerslime.png" alt="" style="width: 40px; height: 40px; object-fit: contain;">
-                    </div>
-                    <div style="font-size: 14px; margin-bottom: 10px; background: #E8F8F5; padding: 8px; border-radius: 4px; border: 2px solid #000;">
-                        <strong>✨ 能力:</strong> 最初のターン、HP8の壁を生成。壁が壊れたら3ターン後にもう一度壁を設置。
-                    </div>
-                    <button class="btn btn-yellow" id="btn-buy-hammer-slime" style="width: 100%; font-size: 18px; padding: 10px;">35,000円で購入</button>
+                <div class="character-grid" id="owned-list">
+                    <!-- キャラ一覧生成 -->
                 </div>
             </div>
-            <button class="btn btn-red" id="btn-close-shop" style="margin-top: 15px;">閉じる</button>
         </div>
     </div>
 
@@ -1049,7 +685,9 @@
     <div id="modal-settings" class="modal-overlay">
         <div class="modal-content" style="min-width: 300px;">
             <h2 style="margin-top: 0;">設定</h2>
+            
             <button class="btn btn-blue" id="btn-edit-profile" style="padding: 10px 20px; font-size: 18px; width: 100%; margin-bottom: 15px;">プロフィールを変える</button>
+            
             <input type="text" id="settings-name-input" class="custom-input" placeholder="新しい名前 (3〜12文字)" maxlength="12" style="width: 90%; margin: 0 auto 15px auto;">
             <div style="display: flex; gap: 15px; justify-content: center; margin-bottom: 20px;">
                 <button class="btn btn-red" id="btn-close-settings" style="padding: 10px 20px; font-size: 18px;">閉じる</button>
@@ -1119,9 +757,10 @@
             <h2 id="detail-name" style="margin-top: 0; font-size: 28px;">名前</h2>
             <div id="detail-rarity" style="font-size: 16px; font-weight: bold; margin-top: -15px; margin-bottom: 10px;">レアリティ</div>
             <img id="detail-image" src="" alt="" style="width: 120px; height: 120px; margin: 0 auto; display: block; object-fit: contain;">
+            
             <div class="detail-text-box">
                 <div><strong>❤️ HP:</strong> <span id="detail-hp"></span></div>
-                <div style="margin-top: 5px;"><strong>🗡️ 攻撃力:</strong> <span id="detail-attack"></span></div>
+                <div style="margin-top: 5px;"><strong>⚔️ 攻撃力:</strong> <span id="detail-attack"></span></div>
                 <div style="margin-top: 15px; padding-top: 15px; border-top: 2px dashed #000;">
                     <strong>✨ 能力:</strong><br>
                     <span id="detail-ability" style="display: inline-block; margin-top: 5px;"></span>
@@ -1135,7 +774,9 @@
     <div id="modal-reward" class="modal-overlay">
         <div class="modal-content" style="width: 90%; max-width: 600px;">
             <h2>勝利！好きなスライムを1体選んでね</h2>
-            <div class="reward-grid" id="reward-grid-container"></div>
+            <div class="reward-grid" id="reward-grid-container">
+                <!-- 敵チームのキャラ一覧が生成されます -->
+            </div>
         </div>
     </div>
 
@@ -1156,6 +797,7 @@
         </div>
     </div>
 
+    <!-- JSファイル読み込み (ファイル分割対応) -->
     <script src="sub.js"></script>
     <script src="main.js"></script>
 </body>
