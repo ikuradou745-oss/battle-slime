@@ -9,6 +9,7 @@ class GameDataManager {
 
     loadData() {
         this.playerName = localStorage.getItem('playerName') || null;
+        this.money = parseInt(localStorage.getItem('money')) || 0;
         
         // 初期状態の読み込み。なければスライム(ID:slime_01)1体のみ所持・装備
         const savedOwned = localStorage.getItem('ownedSlimes');
@@ -24,10 +25,6 @@ class GameDataManager {
         const savedStreak = localStorage.getItem('winStreak');
         this.winStreak = savedStreak ? parseInt(savedStreak) : 0;
 
-        // 所持金の読み込み
-        const savedMoney = localStorage.getItem('money');
-        this.money = savedMoney ? parseInt(savedMoney) : 0;
-
         // プロフィールの読み込み (14x14=196配列)
         const savedProfile = localStorage.getItem('playerProfile');
         this.playerProfile = savedProfile ? JSON.parse(savedProfile) : Array(196).fill('transparent');
@@ -39,11 +36,11 @@ class GameDataManager {
     }
 
     saveGameData() {
+        localStorage.setItem('money', this.money);
         localStorage.setItem('ownedSlimes', JSON.stringify(this.ownedSlimes));
         localStorage.setItem('equippedSlimes', JSON.stringify(this.equippedSlimes));
         localStorage.setItem('isFirstBattle', this.isFirstBattle);
         localStorage.setItem('winStreak', this.winStreak);
-        localStorage.setItem('money', this.money);
         localStorage.setItem('playerProfile', JSON.stringify(this.playerProfile));
     }
 
@@ -62,7 +59,7 @@ class BrainrotCollectionService {
         this.collectionData = [];
     }
     logCollection(item) {
-        // コンソールは無効化されていますが内部機能は維持
+        console.log(`[BrainrotCollectionService] Collected: ${item}`);
     }
 }
 
@@ -72,6 +69,7 @@ class BrainrotCarryService {
     }
     updateCarryStatus(status) {
         this.carryStatus = status;
+        console.log(`[BrainrotCarryService] Status updated to: ${status}`);
     }
 }
 
@@ -80,10 +78,7 @@ class MoneyDisplayController {
         this.element = document.getElementById(elementId);
         this.currentMoney = 0;
     }
-    updateDisplay(amount) {
-        if (amount !== undefined) {
-            this.currentMoney = amount;
-        }
+    updateDisplay() {
         if (this.element) {
             this.element.textContent = `所持金 ${this.currentMoney}円`;
         }
@@ -95,6 +90,15 @@ class MoneyDisplayController {
 // ============================================================================
 let currentBattleSpeed = 1;
 
+// レアリティの数値化関数
+function getRarityValue(rarity) {
+    if (rarity === 'common') return 1;
+    if (rarity === 'uncommon') return 2;
+    if (rarity === 'rare') return 3;
+    if (rarity === 'legendary') return 4;
+    return 1;
+}
+
 // ============================================================================
 // メインロジック
 // ============================================================================
@@ -102,6 +106,7 @@ const gameData = new GameDataManager();
 const collectionService = new BrainrotCollectionService();
 const carryService = new BrainrotCarryService();
 const moneyController = new MoneyDisplayController('money-display');
+moneyController.currentMoney = gameData.money;
 
 document.addEventListener('DOMContentLoaded', () => {
     // ---- 画面要素 ----
@@ -109,9 +114,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const screenHome = document.getElementById('screen-home');
     const screenPlay = document.getElementById('screen-play');
     const screenEquip = document.getElementById('screen-equip');
+    const screenShop = document.getElementById('screen-shop');
     const screenMatchmaking = document.getElementById('screen-matchmaking');
     const screenBattle = document.getElementById('screen-battle');
-    const screenShop = document.getElementById('screen-shop');
     
     // ---- UI要素 ----
     const inputName = document.getElementById('player-name-input');
@@ -180,7 +185,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // バトル終了モーダル
     const modalReward = document.getElementById('modal-reward');
-    const rewardTitle = document.getElementById('reward-title');
     const rewardGridContainer = document.getElementById('reward-grid-container');
     const modalLose = document.getElementById('modal-lose');
     const btnCloseLose = document.getElementById('btn-close-lose');
@@ -210,7 +214,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     function initGame() {
-        moneyController.updateDisplay(gameData.money);
+        moneyController.updateDisplay();
         
         if (gameData.getPlayerName()) {
             updateProfileUI();
@@ -304,16 +308,196 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 10個のデモプロフィールの定義（14x14の文字列を配列に変換）
     const demoProfiles = [
-        { name: "スライム", pattern: [ "..............", "..............", "..............", "..............", ".....BBBB.....", "...BBBBBBBB...", "..BBB.BB.BBB..", ".BBBB.BB.BBBB.", ".BBBBBBBBBBBB.", ".BBBBBBBBBBBB.", ".BBBBBBBBBBBB.", "..BBBBBBBBBB..", "..............", ".............." ] },
-        { name: "ハート", pattern: [ "..............", "..............", "..RRR....RRR..", ".RRRRR..RRRRR.", ".RRRRRRRRRRRR.", ".RRRRRRRRRRRR.", "..RRRRRRRRRR..", "...RRRRRRRR...", "....RRRRRR....", ".....RRRR.....", "......RR......", "..............", "..............", ".............." ] },
-        { name: "剣", pattern: [ ".............S", "............SS", "...........SS.", "..........SS..", ".........SS...", "........SS....", ".......SS.....", "......SS......", ".....SS.......", "..KKSS........", ".KKKK.........", "K.KK..........", "..............", ".............." ] },
-        { name: "星", pattern: [ "..............", "......YY......", "......YY......", ".....YYYY.....", "..YYYYYYYYYY..", "...YYYYYYYY...", "....YYYYYY....", "....YYYYYY....", "...YYY..YYY...", "..YYY....YYY..", "..YY......YY..", "..............", "..............", ".............." ] },
-        { name: "ポーション", pattern: [ "..............", ".....KKKK.....", ".....KWWK.....", ".....KWWK.....", "....KMMMMK....", "...KMMMMMMK...", "..KMMMMMMMMK..", "..KMMMMMMMMK..", "..KMMMMMMMMK..", "..KMMMMMMMMK..", "...KMMMMMMK...", "....KKKKKK....", "..............", ".............." ] },
-        { name: "炎", pattern: [ "..............", ".......R......", "......RR......", ".....RRRO.....", "....RRROO.....", "...RRROOOO....", "..RRRROOOOO...", "..RRRROOOOOO..", "..RRRROOYOOO..", "...RRROYYOO...", "....RROOOO....", ".....RRRR.....", "..............", ".............." ] },
-        { name: "顔文字", pattern: [ "..............", "..............", "..............", "....K....K....", "....K....K....", "..............", "..............", "..............", "...K......K...", "...K......K...", "....KKKKKK....", "..............", "..............", ".............." ] },
-        { name: "葉っぱ", pattern: [ "..............", ".......G......", "......GGG.....", ".....GGGGG....", "....GGGGGG....", "...GGGGGGG....", "..GGGGGGGG....", "..GGGGGGG.....", "..GGGGGG......", "...GGGG.......", "....GG........", "....G.........", "..............", ".............." ] },
-        { name: "雲", pattern: [ "..............", "..............", "..............", "..............", "......CCC.....", "....CCCCCCC...", "..CCCCCCCCCC..", ".CCCCCCCCCCCC.", ".CCCCCCCCCCCC.", "..CCCCCCCCCC..", "..............", "..............", "..............", ".............." ] },
-        { name: "市松模様", pattern: [ "K.K.K.K.K.K.K.", ".K.K.K.K.K.K.K", "K.K.K.K.K.K.K.", ".K.K.K.K.K.K.K", "K.K.K.K.K.K.K.", ".K.K.K.K.K.K.K", "K.K.K.K.K.K.K.", ".K.K.K.K.K.K.K", "K.K.K.K.K.K.K.", ".K.K.K.K.K.K.K", "K.K.K.K.K.K.K.", ".K.K.K.K.K.K.K", "K.K.K.K.K.K.K.", ".K.K.K.K.K.K.K" ] }
+        {
+            name: "スライム",
+            pattern: [
+                "..............",
+                "..............",
+                "..............",
+                "..............",
+                ".....BBBB.....",
+                "...BBBBBBBB...",
+                "..BBB.BB.BBB..",
+                ".BBBB.BB.BBBB.",
+                ".BBBBBBBBBBBB.",
+                ".BBBBBBBBBBBB.",
+                ".BBBBBBBBBBBB.",
+                "..BBBBBBBBBB..",
+                "..............",
+                ".............."
+            ]
+        },
+        {
+            name: "ハート",
+            pattern: [
+                "..............",
+                "..............",
+                "..RRR....RRR..",
+                ".RRRRR..RRRRR.",
+                ".RRRRRRRRRRRR.",
+                ".RRRRRRRRRRRR.",
+                "..RRRRRRRRRR..",
+                "...RRRRRRRR...",
+                "....RRRRRR....",
+                ".....RRRR.....",
+                "......RR......",
+                "..............",
+                "..............",
+                ".............."
+            ]
+        },
+        {
+            name: "剣",
+            pattern: [
+                ".............S",
+                "............SS",
+                "...........SS.",
+                "..........SS..",
+                ".........SS...",
+                "........SS....",
+                ".......SS.....",
+                "......SS......",
+                ".....SS.......",
+                "..KKSS........",
+                ".KKKK.........",
+                "K.KK..........",
+                "..............",
+                ".............."
+            ]
+        },
+        {
+            name: "星",
+            pattern: [
+                "..............",
+                "......YY......",
+                "......YY......",
+                ".....YYYY.....",
+                "..YYYYYYYYYY..",
+                "...YYYYYYYY...",
+                "....YYYYYY....",
+                "....YYYYYY....",
+                "...YYY..YYY...",
+                "..YYY....YYY..",
+                "..YY......YY..",
+                "..............",
+                "..............",
+                ".............."
+            ]
+        },
+        {
+            name: "ポーション",
+            pattern: [
+                "..............",
+                ".....KKKK.....",
+                ".....KWWK.....",
+                ".....KWWK.....",
+                "....KMMMMK....",
+                "...KMMMMMMK...",
+                "..KMMMMMMMMK..",
+                "..KMMMMMMMMK..",
+                "..KMMMMMMMMK..",
+                "..KMMMMMMMMK..",
+                "...KMMMMMMK...",
+                "....KKKKKK....",
+                "..............",
+                ".............."
+            ]
+        },
+        {
+            name: "炎",
+            pattern: [
+                "..............",
+                ".......R......",
+                "......RR......",
+                ".....RRRO.....",
+                "....RRROO.....",
+                "...RRROOOO....",
+                "..RRRROOOOO...",
+                "..RRRROOOOOO..",
+                "..RRRROOYOOO..",
+                "...RRROYYOO...",
+                "....RROOOO....",
+                ".....RRRR.....",
+                "..............",
+                ".............."
+            ]
+        },
+        {
+            name: "顔文字",
+            pattern: [
+                "..............",
+                "..............",
+                "..............",
+                "....K....K....",
+                "....K....K....",
+                "..............",
+                "..............",
+                "..............",
+                "...K......K...",
+                "...K......K...",
+                "....KKKKKK....",
+                "..............",
+                "..............",
+                ".............."
+            ]
+        },
+        {
+            name: "葉っぱ",
+            pattern: [
+                "..............",
+                ".......G......",
+                "......GGG.....",
+                ".....GGGGG....",
+                "....GGGGGG....",
+                "...GGGGGGG....",
+                "..GGGGGGGG....",
+                "..GGGGGGG.....",
+                "..GGGGGG......",
+                "...GGGG.......",
+                "....GG........",
+                "....G.........",
+                "..............",
+                ".............."
+            ]
+        },
+        {
+            name: "雲",
+            pattern: [
+                "..............",
+                "..............",
+                "..............",
+                "..............",
+                "......CCC.....",
+                "....CCCCCCC...",
+                "..CCCCCCCCCC..",
+                ".CCCCCCCCCCCC.",
+                ".CCCCCCCCCCCC.",
+                "..CCCCCCCCCC..",
+                "..............",
+                "..............",
+                "..............",
+                ".............."
+            ]
+        },
+        {
+            name: "市松模様",
+            pattern: [
+                "K.K.K.K.K.K.K.",
+                ".K.K.K.K.K.K.K",
+                "K.K.K.K.K.K.K.",
+                ".K.K.K.K.K.K.K",
+                "K.K.K.K.K.K.K.",
+                ".K.K.K.K.K.K.K",
+                "K.K.K.K.K.K.K.",
+                ".K.K.K.K.K.K.K",
+                "K.K.K.K.K.K.K.",
+                ".K.K.K.K.K.K.K",
+                "K.K.K.K.K.K.K.",
+                ".K.K.K.K.K.K.K",
+                "K.K.K.K.K.K.K.",
+                ".K.K.K.K.K.K.K"
+            ]
+        }
     ];
 
     function parseDemoPattern(patternArray) {
@@ -334,7 +518,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function initProfileEditor() {
-        // デモプロフィールのボタン生成
         const demoContainer = document.getElementById('demo-profiles-container');
         demoContainer.innerHTML = '';
         demoProfiles.forEach((demo, idx) => {
@@ -348,7 +531,6 @@ document.addEventListener('DOMContentLoaded', () => {
             demoContainer.appendChild(btn);
         });
 
-        // カラーパレットの設定
         const paletteColors = ['#000000', '#FFFFFF', '#E74C3C', '#3498DB', '#2ECC71', '#F1C40F', '#9B59B6', '#E67E22', '#87CEEB', 'transparent'];
         const paletteContainer = document.getElementById('color-palette');
         paletteContainer.innerHTML = '';
@@ -380,7 +562,6 @@ document.addEventListener('DOMContentLoaded', () => {
             paletteContainer.appendChild(colorBtn);
         });
 
-        // お絵かきグリッドの設定
         const grid = document.getElementById('profile-grid');
         grid.innerHTML = '';
         
@@ -503,7 +684,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // ========================================================================
-    // ホーム画面とプレイモードのロジック
+    // ホーム画面とプレイモード、ショップのロジック
     // ========================================================================
 
     btnPlay.addEventListener('click', () => {
@@ -537,10 +718,7 @@ document.addEventListener('DOMContentLoaded', () => {
         showMessage('ストーリーモードは<br>開発中です！');
     });
 
-    // ========================================================================
-    // ショップのロジック
-    // ========================================================================
-
+    // --- ショップ機能 ---
     btnShop.addEventListener('click', () => {
         showScreen(screenShop);
     });
@@ -549,38 +727,26 @@ document.addEventListener('DOMContentLoaded', () => {
         showScreen(screenHome);
     });
 
-    btnBuyMoney.addEventListener('click', () => {
-        if (gameData.ownedSlimes.includes('slime_money')) {
-            showMessage('すでに持っています！');
-            return;
-        }
-        if (gameData.money >= 15000) {
-            gameData.money -= 15000;
-            gameData.ownedSlimes.push('slime_money');
+    function buyItem(price, itemId, itemName) {
+        if (gameData.money >= price) {
+            gameData.money -= price;
+            gameData.ownedSlimes.push(itemId);
             gameData.saveGameData();
-            moneyController.updateDisplay(gameData.money);
-            showMessage('マネースライムを購入しました！');
+            moneyController.currentMoney = gameData.money;
+            moneyController.updateDisplay();
+            showMessage(`${itemName}を購入しました！`);
         } else {
-            showMessage('お金が足りません。');
+            showMessage('お金が足りません！');
         }
+    }
+
+    btnBuyMoney.addEventListener('click', () => {
+        buyItem(15000, 'slime_money', 'マネースライム');
     });
 
     btnBuyHammer.addEventListener('click', () => {
-        if (gameData.ownedSlimes.includes('slime_hammer')) {
-            showMessage('すでに持っています！');
-            return;
-        }
-        if (gameData.money >= 35000) {
-            gameData.money -= 35000;
-            gameData.ownedSlimes.push('slime_hammer');
-            gameData.saveGameData();
-            moneyController.updateDisplay(gameData.money);
-            showMessage('ハンマースライムを購入しました！');
-        } else {
-            showMessage('お金が足りません。');
-        }
+        buyItem(35000, 'slime_hammer', 'ハンマースライム');
     });
-
 
     // ========================================================================
     // 装備画面のロジック (最大4枠, 同キャラ2体まで)
@@ -713,10 +879,11 @@ document.addEventListener('DOMContentLoaded', () => {
         currentWord: null,
         typedIndex: 0,
         isPerfect: true,
-        isActive: false
+        isActive: false,
+        playerWallHp: 0, // ハンマースライムの壁HP
+        enemyWallHp: 0
     };
 
-    // レアリティは4段階に変更
     const rarityRanks = ['common', 'uncommon', 'rare', 'legendary'];
 
     function getUpgradeProb(currentRarityRank, winStreak) {
@@ -779,8 +946,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 stunTurns: 0, 
                 revived: false, 
                 countered: false,
-                wallHp: base.id === 'slime_hammer' ? 8 : 0,
-                wallCooldown: 0,
+                hammerCooldown: 0,
                 isPlayer: true, 
                 dom: null 
             };
@@ -790,7 +956,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (gameData.isFirstBattle) {
             const base = characterDatabase.find(c => c.id === 'slime_01');
             battleState.enemyTeam.push({ 
-                ...base, currentHp: base.hp, attackCount: 0, poisonTurns: 0, burnTurns: 0, burnDamageCount: 0, stunTurns: 0, revived: false, countered: false, wallHp: 0, wallCooldown: 0, isPlayer: false, dom: null 
+                ...base, currentHp: base.hp, attackCount: 0, poisonTurns: 0, burnTurns: 0, burnDamageCount: 0, stunTurns: 0, revived: false, countered: false, hammerCooldown: 0, isPlayer: false, dom: null 
             });
             gameData.isFirstBattle = false;
             gameData.saveGameData();
@@ -837,22 +1003,42 @@ document.addEventListener('DOMContentLoaded', () => {
                     stunTurns: 0,
                     revived: false, 
                     countered: false,
-                    wallHp: randomEnemy.id === 'slime_hammer' ? 8 : 0,
-                    wallCooldown: 0,
+                    hammerCooldown: 0,
                     isPlayer: false, 
                     dom: null 
                 });
             }
         }
 
+        // ハンマースライムの壁の初期化
+        let hasPlayerHammer = false;
+        battleState.playerTeam.forEach(c => {
+            if (c.id === 'slime_hammer') {
+                hasPlayerHammer = true;
+                c.hammerCooldown = -1; // -1は設置済み状態
+            }
+        });
+        battleState.playerWallHp = hasPlayerHammer ? 8 : 0;
+
+        let hasEnemyHammer = false;
+        battleState.enemyTeam.forEach(c => {
+            if (c.id === 'slime_hammer') {
+                hasEnemyHammer = true;
+                c.hammerCooldown = -1;
+            }
+        });
+        battleState.enemyWallHp = hasEnemyHammer ? 8 : 0;
+
         battleState.enemyTeam.forEach((chara, i) => {
             chara.dom = createBattleIcon(chara, `enemy-${i}`);
             battleEnemyTeam.appendChild(chara.dom);
+            if (chara.id === 'slime_hammer') showAbilityText(chara.dom, "壁設置!");
         });
 
         battleState.playerTeam.forEach((chara, i) => {
             chara.dom = createBattleIcon(chara, `player-${i}`);
             battlePlayerTeam.appendChild(chara.dom);
+            if (chara.id === 'slime_hammer') showAbilityText(chara.dom, "壁設置!");
         });
 
         battleState.pIndex = 0;
@@ -898,6 +1084,24 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             statusDiv.style.display = 'none';
         }
+
+        // ハンマースライムの壁のUI更新
+        let wallHp = chara.isPlayer ? battleState.playerWallHp : battleState.enemyWallHp;
+        let isActiveFighter = chara.isPlayer ? (chara === battleState.playerTeam[battleState.pIndex]) : (chara === battleState.enemyTeam[battleState.eIndex]);
+        
+        let wallDiv = chara.dom.querySelector('.wall-shield');
+        if (!wallDiv) {
+            wallDiv = document.createElement('div');
+            wallDiv.className = 'wall-shield';
+            chara.dom.appendChild(wallDiv);
+        }
+        
+        if (isActiveFighter && wallHp > 0 && chara.currentHp > 0) {
+            wallDiv.style.display = 'flex';
+            wallDiv.innerHTML = `🛡️${Math.round(wallHp * 10)/10}`;
+        } else {
+            wallDiv.style.display = 'none';
+        }
     }
 
     function updateAllBattleUI() {
@@ -910,11 +1114,7 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 dom.classList.remove('fainted');
                 const hpDisplay = Math.round(chara.currentHp * 10) / 10;
-                let statsStr = `❤️${hpDisplay} 🗡️${chara.attack}`;
-                if (chara.wallHp > 0) {
-                    statsStr += ` 🧱${Math.round(chara.wallHp * 10) / 10}`;
-                }
-                stats.innerHTML = statsStr;
+                stats.innerHTML = `❤️${hpDisplay} 🗡️${chara.attack}`;
             }
             updateStatusIcon(chara);
         });
@@ -928,11 +1128,7 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 dom.classList.remove('fainted');
                 const hpDisplay = Math.round(chara.currentHp * 10) / 10;
-                let statsStr = `❤️${hpDisplay} 🗡️${chara.attack}`;
-                if (chara.wallHp > 0) {
-                    statsStr += ` 🧱${Math.round(chara.wallHp * 10) / 10}`;
-                }
-                stats.innerHTML = statsStr;
+                stats.innerHTML = `❤️${hpDisplay} 🗡️${chara.attack}`;
             }
             updateStatusIcon(chara);
         });
@@ -951,15 +1147,8 @@ document.addEventListener('DOMContentLoaded', () => {
             showAbilityText(deadChara.dom, "死亡時カウンター!");
             playSlashAnimation(killerChara.dom, currentBattleSpeed);
             
-            if (killerChara.wallHp > 0) {
-                killerChara.wallHp -= deadChara.attack * 3;
-                if (killerChara.wallHp <= 0) {
-                    killerChara.wallCooldown = 3;
-                    killerChara.wallHp = 0;
-                }
-            } else {
-                killerChara.currentHp -= deadChara.attack * 3;
-            }
+            // カウンターは壁を貫通して本体にダメージ
+            killerChara.currentHp -= deadChara.attack * 3;
             
             if (killerChara.currentHp <= 0 && killerChara.id === 'slime_01' && !killerChara.revived) {
                 killerChara.currentHp = killerChara.hp / 2;
@@ -991,18 +1180,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         let activePlayer = battleState.playerTeam[battleState.pIndex];
         let activeEnemy = battleState.enemyTeam[battleState.eIndex];
-
-        // 壁のクールダウン処理
-        if (activePlayer.id === 'slime_hammer' && activePlayer.currentHp > 0) {
-            if (activePlayer.wallHp <= 0 && activePlayer.wallCooldown > 0) {
-                activePlayer.wallCooldown -= 1;
-                if (activePlayer.wallCooldown === 0) {
-                    activePlayer.wallHp = 8;
-                    showAbilityText(activePlayer.dom, "壁復活！");
-                    updateAllBattleUI();
-                }
-            }
-        }
 
         if (activePlayer.poisonTurns > 0) {
             activePlayer.currentHp -= 1;
@@ -1103,6 +1280,20 @@ document.addEventListener('DOMContentLoaded', () => {
         attacker.attackCount = (attacker.attackCount || 0) + 1;
         let finalDamage = attacker.attack;
 
+        // ハンマースライムのクールダウン進行
+        if (attacker.id === 'slime_hammer' && attacker.hammerCooldown > 0) {
+            attacker.hammerCooldown -= 1;
+            if (attacker.hammerCooldown === 0) {
+                if (isPlayerAttacking) {
+                    battleState.playerWallHp = 8;
+                } else {
+                    battleState.enemyWallHp = 8;
+                }
+                attacker.hammerCooldown = -1; // 設置済み状態
+                showAbilityText(attacker.dom, "壁再設置!");
+            }
+        }
+
         let isLaserAttack = false;
         if (attacker.id === 'slime_04' && attacker.attackCount % 3 === 0) {
             finalDamage = 1.5;
@@ -1140,28 +1331,50 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         setTimeout(() => {
-            defender.dom.classList.add('damage-shake');
-            setTimeout(() => defender.dom.classList.remove('damage-shake'), 300 / currentBattleSpeed);
+            let damage = finalDamage;
+            let defenderWallHp = isPlayerAttacking ? battleState.enemyWallHp : battleState.playerWallHp;
 
-            // 壁がある場合のダメージ処理
-            if (defender.wallHp > 0) {
-                defender.wallHp -= finalDamage;
-                showAbilityText(defender.dom, "壁でガード！");
-                if (defender.wallHp <= 0) {
-                    defender.wallCooldown = 3;
-                    defender.wallHp = 0;
+            // 壁（シールド）で肩代わり処理
+            if (defenderWallHp > 0) {
+                defenderWallHp -= damage;
+                showAbilityText(defender.dom, "壁で防御!");
+                
+                if (defenderWallHp <= 0) {
+                    damage = -defenderWallHp; // 余ったダメージ分
+                    defenderWallHp = 0;
+                    
+                    // 壁が壊れたので、該当チームのハンマースライムのクールダウンを開始
+                    let defTeam = isPlayerAttacking ? battleState.enemyTeam : battleState.playerTeam;
+                    defTeam.forEach(c => {
+                        if (c.id === 'slime_hammer' && c.hammerCooldown === -1) {
+                            c.hammerCooldown = 3;
+                        }
+                    });
+                } else {
+                    damage = 0; // 全て吸収
                 }
-            } else {
-                defender.currentHp -= finalDamage;
+                
+                if (isPlayerAttacking) {
+                    battleState.enemyWallHp = defenderWallHp;
+                } else {
+                    battleState.playerWallHp = defenderWallHp;
+                }
             }
 
-            if (defender.currentHp <= 0 && defender.id === 'slime_01' && !defender.revived) {
-                defender.currentHp = defender.hp / 2;
-                defender.revived = true;
-                showAbilityText(defender.dom, "能力発動");
-            }
+            // 残りのダメージを本体に与える
+            if (damage > 0) {
+                defender.currentHp -= damage;
+                defender.dom.classList.add('damage-shake');
+                setTimeout(() => defender.dom.classList.remove('damage-shake'), 300 / currentBattleSpeed);
 
-            checkDeathCounter(defender, attacker);
+                if (defender.currentHp <= 0 && defender.id === 'slime_01' && !defender.revived) {
+                    defender.currentHp = defender.hp / 2;
+                    defender.revived = true;
+                    showAbilityText(defender.dom, "能力発動");
+                }
+
+                checkDeathCounter(defender, attacker);
+            }
 
             updateAllBattleUI();
 
@@ -1196,18 +1409,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         let activeEnemy = battleState.enemyTeam[battleState.eIndex];
         let activePlayer = battleState.playerTeam[battleState.pIndex];
-
-        // 壁のクールダウン処理
-        if (activeEnemy.id === 'slime_hammer' && activeEnemy.currentHp > 0) {
-            if (activeEnemy.wallHp <= 0 && activeEnemy.wallCooldown > 0) {
-                activeEnemy.wallCooldown -= 1;
-                if (activeEnemy.wallCooldown === 0) {
-                    activeEnemy.wallHp = 8;
-                    showAbilityText(activeEnemy.dom, "壁復活！");
-                    updateAllBattleUI();
-                }
-            }
-        }
 
         if (activeEnemy.poisonTurns > 0) {
             activeEnemy.currentHp -= 1;
@@ -1258,43 +1459,41 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function endBattle(isWin) {
         battleState.isActive = false;
-        let rewardMoney = 0;
+        
+        let earnedMoney = 0;
         
         if (isWin) {
-            gameData.winStreak++; 
+            gameData.winStreak++;
             
-            // お金計算
-            let moneySlimeMultiplier = 1;
-            let slimeCount = battleState.playerTeam.length;
-            let enemyRarityTotal = 0;
-            
-            battleState.playerTeam.forEach(chara => {
-                if (chara.id === 'slime_money') {
-                    moneySlimeMultiplier = 2; 
-                }
+            // お金の計算: (スライムの数) * (相手の各スライムのレアリティ数値の合計) * 100
+            const enemyCount = battleState.enemyTeam.length;
+            let raritySum = 0;
+            battleState.enemyTeam.forEach(enemy => {
+                raritySum += getRarityValue(enemy.rarity);
             });
             
-            battleState.enemyTeam.forEach(chara => {
-                let rVal = 1; // common
-                if (chara.rarity === 'uncommon') rVal = 2;
-                if (chara.rarity === 'rare') rVal = 3;
-                if (chara.rarity === 'legendary') rVal = 4;
-                enemyRarityTotal += rVal;
-            });
+            earnedMoney = enemyCount * raritySum * 100;
             
-            rewardMoney = slimeCount * enemyRarityTotal * 100 * moneySlimeMultiplier;
-            gameData.money += rewardMoney;
-
+            // マネースライムの能力（持っていると倍になる）
+            const moneySlimeCount = battleState.playerTeam.filter(p => p.id === 'slime_money').length;
+            if (moneySlimeCount > 0) {
+                // 所持数分だけ倍々にする（1体で2倍、2体で4倍）
+                earnedMoney *= Math.pow(2, moneySlimeCount);
+            }
+            
+            gameData.money += earnedMoney;
+            moneyController.currentMoney = gameData.money;
+            moneyController.updateDisplay();
+            
         } else {
             gameData.winStreak = 0; 
         }
         
         gameData.saveGameData();
-        moneyController.updateDisplay(gameData.money);
 
         setTimeout(() => {
             if (isWin) {
-                showRewardScreen(rewardMoney);
+                showRewardScreen(earnedMoney);
             } else {
                 modalLose.classList.add('active');
             }
@@ -1309,11 +1508,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // ========================================================================
     // 報酬獲得画面ロジック
     // ========================================================================
-    function showRewardScreen(rewardMoney) {
+    function showRewardScreen(earnedMoney) {
         rewardGridContainer.innerHTML = "";
         
-        // 獲得金額をタイトルに表示
-        rewardTitle.innerHTML = `勝利！獲得金額: ${rewardMoney}円<br>好きなスライムを1体選んでね`;
+        const h2 = modalReward.querySelector('h2');
+        h2.innerHTML = `勝利！ ${earnedMoney}円獲得！<br>好きなスライムを1体選んでね`;
         
         const uniqueEnemies = [];
         const seenIds = new Set();
