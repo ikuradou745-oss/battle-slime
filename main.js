@@ -9,7 +9,6 @@ class GameDataManager {
 
     loadData() {
         this.playerName = localStorage.getItem('playerName') || null;
-        this.money = parseInt(localStorage.getItem('money')) || 0;
         
         // 初期状態の読み込み。なければスライム(ID:slime_01)1体のみ所持・装備
         const savedOwned = localStorage.getItem('ownedSlimes');
@@ -36,7 +35,6 @@ class GameDataManager {
     }
 
     saveGameData() {
-        localStorage.setItem('money', this.money);
         localStorage.setItem('ownedSlimes', JSON.stringify(this.ownedSlimes));
         localStorage.setItem('equippedSlimes', JSON.stringify(this.equippedSlimes));
         localStorage.setItem('isFirstBattle', this.isFirstBattle);
@@ -90,15 +88,6 @@ class MoneyDisplayController {
 // ============================================================================
 let currentBattleSpeed = 1;
 
-// レアリティの数値化関数
-function getRarityValue(rarity) {
-    if (rarity === 'common') return 1;
-    if (rarity === 'uncommon') return 2;
-    if (rarity === 'rare') return 3;
-    if (rarity === 'legendary') return 4;
-    return 1;
-}
-
 // ============================================================================
 // メインロジック
 // ============================================================================
@@ -106,7 +95,6 @@ const gameData = new GameDataManager();
 const collectionService = new BrainrotCollectionService();
 const carryService = new BrainrotCarryService();
 const moneyController = new MoneyDisplayController('money-display');
-moneyController.currentMoney = gameData.money;
 
 document.addEventListener('DOMContentLoaded', () => {
     // ---- 画面要素 ----
@@ -114,7 +102,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const screenHome = document.getElementById('screen-home');
     const screenPlay = document.getElementById('screen-play');
     const screenEquip = document.getElementById('screen-equip');
-    const screenShop = document.getElementById('screen-shop');
     const screenMatchmaking = document.getElementById('screen-matchmaking');
     const screenBattle = document.getElementById('screen-battle');
     
@@ -133,11 +120,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnClosePlay = document.getElementById('btn-close-play');
     const btnVersusMode = document.getElementById('btn-versus-mode');
     const btnStoryMode = document.getElementById('btn-story-mode');
-
-    // ショップ画面
-    const btnCloseShop = document.getElementById('btn-close-shop');
-    const btnBuyMoney = document.getElementById('btn-buy-money');
-    const btnBuyHammer = document.getElementById('btn-buy-hammer');
 
     // 装備画面
     const searchSlimeInput = document.getElementById('search-slime');
@@ -518,6 +500,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function initProfileEditor() {
+        // デモプロフィールのボタン生成
         const demoContainer = document.getElementById('demo-profiles-container');
         demoContainer.innerHTML = '';
         demoProfiles.forEach((demo, idx) => {
@@ -531,6 +514,7 @@ document.addEventListener('DOMContentLoaded', () => {
             demoContainer.appendChild(btn);
         });
 
+        // カラーパレットの設定
         const paletteColors = ['#000000', '#FFFFFF', '#E74C3C', '#3498DB', '#2ECC71', '#F1C40F', '#9B59B6', '#E67E22', '#87CEEB', 'transparent'];
         const paletteContainer = document.getElementById('color-palette');
         paletteContainer.innerHTML = '';
@@ -562,6 +546,7 @@ document.addEventListener('DOMContentLoaded', () => {
             paletteContainer.appendChild(colorBtn);
         });
 
+        // お絵かきグリッドの設定
         const grid = document.getElementById('profile-grid');
         grid.innerHTML = '';
         
@@ -684,7 +669,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // ========================================================================
-    // ホーム画面とプレイモード、ショップのロジック
+    // ホーム画面とプレイモードのロジック
     // ========================================================================
 
     btnPlay.addEventListener('click', () => {
@@ -718,34 +703,8 @@ document.addEventListener('DOMContentLoaded', () => {
         showMessage('ストーリーモードは<br>開発中です！');
     });
 
-    // --- ショップ機能 ---
     btnShop.addEventListener('click', () => {
-        showScreen(screenShop);
-    });
-
-    btnCloseShop.addEventListener('click', () => {
-        showScreen(screenHome);
-    });
-
-    function buyItem(price, itemId, itemName) {
-        if (gameData.money >= price) {
-            gameData.money -= price;
-            gameData.ownedSlimes.push(itemId);
-            gameData.saveGameData();
-            moneyController.currentMoney = gameData.money;
-            moneyController.updateDisplay();
-            showMessage(`${itemName}を購入しました！`);
-        } else {
-            showMessage('お金が足りません！');
-        }
-    }
-
-    btnBuyMoney.addEventListener('click', () => {
-        buyItem(15000, 'slime_money', 'マネースライム');
-    });
-
-    btnBuyHammer.addEventListener('click', () => {
-        buyItem(35000, 'slime_hammer', 'ハンマースライム');
+        showMessage('ショップは<br>準備中です！');
     });
 
     // ========================================================================
@@ -814,7 +773,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (chara.rarity === 'common') card.classList.add('rarity-common');
         else if (chara.rarity === 'uncommon') card.classList.add('rarity-uncommon');
         else if (chara.rarity === 'rare') card.classList.add('rarity-rare');
-        else if (chara.rarity === 'legendary') card.classList.add('rarity-legendary');
         
         const img = document.createElement('img');
         img.src = chara.image;
@@ -879,12 +837,10 @@ document.addEventListener('DOMContentLoaded', () => {
         currentWord: null,
         typedIndex: 0,
         isPerfect: true,
-        isActive: false,
-        playerWallHp: 0, // ハンマースライムの壁HP
-        enemyWallHp: 0
+        isActive: false
     };
 
-    const rarityRanks = ['common', 'uncommon', 'rare', 'legendary'];
+    const rarityRanks = ['common', 'uncommon', 'rare', 'epic', 'legendary'];
 
     function getUpgradeProb(currentRarityRank, winStreak) {
         let base = 10 - currentRarityRank;
@@ -946,7 +902,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 stunTurns: 0, 
                 revived: false, 
                 countered: false,
-                hammerCooldown: 0,
                 isPlayer: true, 
                 dom: null 
             };
@@ -956,7 +911,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (gameData.isFirstBattle) {
             const base = characterDatabase.find(c => c.id === 'slime_01');
             battleState.enemyTeam.push({ 
-                ...base, currentHp: base.hp, attackCount: 0, poisonTurns: 0, burnTurns: 0, burnDamageCount: 0, stunTurns: 0, revived: false, countered: false, hammerCooldown: 0, isPlayer: false, dom: null 
+                ...base, currentHp: base.hp, attackCount: 0, poisonTurns: 0, burnTurns: 0, burnDamageCount: 0, stunTurns: 0, revived: false, countered: false, isPlayer: false, dom: null 
             });
             gameData.isFirstBattle = false;
             gameData.saveGameData();
@@ -1003,42 +958,20 @@ document.addEventListener('DOMContentLoaded', () => {
                     stunTurns: 0,
                     revived: false, 
                     countered: false,
-                    hammerCooldown: 0,
                     isPlayer: false, 
                     dom: null 
                 });
             }
         }
 
-        // ハンマースライムの壁の初期化
-        let hasPlayerHammer = false;
-        battleState.playerTeam.forEach(c => {
-            if (c.id === 'slime_hammer') {
-                hasPlayerHammer = true;
-                c.hammerCooldown = -1; // -1は設置済み状態
-            }
-        });
-        battleState.playerWallHp = hasPlayerHammer ? 8 : 0;
-
-        let hasEnemyHammer = false;
-        battleState.enemyTeam.forEach(c => {
-            if (c.id === 'slime_hammer') {
-                hasEnemyHammer = true;
-                c.hammerCooldown = -1;
-            }
-        });
-        battleState.enemyWallHp = hasEnemyHammer ? 8 : 0;
-
         battleState.enemyTeam.forEach((chara, i) => {
             chara.dom = createBattleIcon(chara, `enemy-${i}`);
             battleEnemyTeam.appendChild(chara.dom);
-            if (chara.id === 'slime_hammer') showAbilityText(chara.dom, "壁設置!");
         });
 
         battleState.playerTeam.forEach((chara, i) => {
             chara.dom = createBattleIcon(chara, `player-${i}`);
             battlePlayerTeam.appendChild(chara.dom);
-            if (chara.id === 'slime_hammer') showAbilityText(chara.dom, "壁設置!");
         });
 
         battleState.pIndex = 0;
@@ -1084,24 +1017,6 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             statusDiv.style.display = 'none';
         }
-
-        // ハンマースライムの壁のUI更新
-        let wallHp = chara.isPlayer ? battleState.playerWallHp : battleState.enemyWallHp;
-        let isActiveFighter = chara.isPlayer ? (chara === battleState.playerTeam[battleState.pIndex]) : (chara === battleState.enemyTeam[battleState.eIndex]);
-        
-        let wallDiv = chara.dom.querySelector('.wall-shield');
-        if (!wallDiv) {
-            wallDiv = document.createElement('div');
-            wallDiv.className = 'wall-shield';
-            chara.dom.appendChild(wallDiv);
-        }
-        
-        if (isActiveFighter && wallHp > 0 && chara.currentHp > 0) {
-            wallDiv.style.display = 'flex';
-            wallDiv.innerHTML = `🛡️${Math.round(wallHp * 10)/10}`;
-        } else {
-            wallDiv.style.display = 'none';
-        }
     }
 
     function updateAllBattleUI() {
@@ -1146,8 +1061,6 @@ document.addEventListener('DOMContentLoaded', () => {
             deadChara.countered = true;
             showAbilityText(deadChara.dom, "死亡時カウンター!");
             playSlashAnimation(killerChara.dom, currentBattleSpeed);
-            
-            // カウンターは壁を貫通して本体にダメージ
             killerChara.currentHp -= deadChara.attack * 3;
             
             if (killerChara.currentHp <= 0 && killerChara.id === 'slime_01' && !killerChara.revived) {
@@ -1280,20 +1193,6 @@ document.addEventListener('DOMContentLoaded', () => {
         attacker.attackCount = (attacker.attackCount || 0) + 1;
         let finalDamage = attacker.attack;
 
-        // ハンマースライムのクールダウン進行
-        if (attacker.id === 'slime_hammer' && attacker.hammerCooldown > 0) {
-            attacker.hammerCooldown -= 1;
-            if (attacker.hammerCooldown === 0) {
-                if (isPlayerAttacking) {
-                    battleState.playerWallHp = 8;
-                } else {
-                    battleState.enemyWallHp = 8;
-                }
-                attacker.hammerCooldown = -1; // 設置済み状態
-                showAbilityText(attacker.dom, "壁再設置!");
-            }
-        }
-
         let isLaserAttack = false;
         if (attacker.id === 'slime_04' && attacker.attackCount % 3 === 0) {
             finalDamage = 1.5;
@@ -1331,50 +1230,18 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         setTimeout(() => {
-            let damage = finalDamage;
-            let defenderWallHp = isPlayerAttacking ? battleState.enemyWallHp : battleState.playerWallHp;
+            defender.dom.classList.add('damage-shake');
+            setTimeout(() => defender.dom.classList.remove('damage-shake'), 300 / currentBattleSpeed);
 
-            // 壁（シールド）で肩代わり処理
-            if (defenderWallHp > 0) {
-                defenderWallHp -= damage;
-                showAbilityText(defender.dom, "壁で防御!");
-                
-                if (defenderWallHp <= 0) {
-                    damage = -defenderWallHp; // 余ったダメージ分
-                    defenderWallHp = 0;
-                    
-                    // 壁が壊れたので、該当チームのハンマースライムのクールダウンを開始
-                    let defTeam = isPlayerAttacking ? battleState.enemyTeam : battleState.playerTeam;
-                    defTeam.forEach(c => {
-                        if (c.id === 'slime_hammer' && c.hammerCooldown === -1) {
-                            c.hammerCooldown = 3;
-                        }
-                    });
-                } else {
-                    damage = 0; // 全て吸収
-                }
-                
-                if (isPlayerAttacking) {
-                    battleState.enemyWallHp = defenderWallHp;
-                } else {
-                    battleState.playerWallHp = defenderWallHp;
-                }
+            defender.currentHp -= finalDamage;
+
+            if (defender.currentHp <= 0 && defender.id === 'slime_01' && !defender.revived) {
+                defender.currentHp = defender.hp / 2;
+                defender.revived = true;
+                showAbilityText(defender.dom, "能力発動");
             }
 
-            // 残りのダメージを本体に与える
-            if (damage > 0) {
-                defender.currentHp -= damage;
-                defender.dom.classList.add('damage-shake');
-                setTimeout(() => defender.dom.classList.remove('damage-shake'), 300 / currentBattleSpeed);
-
-                if (defender.currentHp <= 0 && defender.id === 'slime_01' && !defender.revived) {
-                    defender.currentHp = defender.hp / 2;
-                    defender.revived = true;
-                    showAbilityText(defender.dom, "能力発動");
-                }
-
-                checkDeathCounter(defender, attacker);
-            }
+            checkDeathCounter(defender, attacker);
 
             updateAllBattleUI();
 
@@ -1460,40 +1327,16 @@ document.addEventListener('DOMContentLoaded', () => {
     function endBattle(isWin) {
         battleState.isActive = false;
         
-        let earnedMoney = 0;
-        
         if (isWin) {
-            gameData.winStreak++;
-            
-            // お金の計算: (スライムの数) * (相手の各スライムのレアリティ数値の合計) * 100
-            const enemyCount = battleState.enemyTeam.length;
-            let raritySum = 0;
-            battleState.enemyTeam.forEach(enemy => {
-                raritySum += getRarityValue(enemy.rarity);
-            });
-            
-            earnedMoney = enemyCount * raritySum * 100;
-            
-            // マネースライムの能力（持っていると倍になる）
-            const moneySlimeCount = battleState.playerTeam.filter(p => p.id === 'slime_money').length;
-            if (moneySlimeCount > 0) {
-                // 所持数分だけ倍々にする（1体で2倍、2体で4倍）
-                earnedMoney *= Math.pow(2, moneySlimeCount);
-            }
-            
-            gameData.money += earnedMoney;
-            moneyController.currentMoney = gameData.money;
-            moneyController.updateDisplay();
-            
+            gameData.winStreak++; 
         } else {
             gameData.winStreak = 0; 
         }
-        
         gameData.saveGameData();
 
         setTimeout(() => {
             if (isWin) {
-                showRewardScreen(earnedMoney);
+                showRewardScreen();
             } else {
                 modalLose.classList.add('active');
             }
@@ -1508,11 +1351,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // ========================================================================
     // 報酬獲得画面ロジック
     // ========================================================================
-    function showRewardScreen(earnedMoney) {
+    function showRewardScreen() {
         rewardGridContainer.innerHTML = "";
-        
-        const h2 = modalReward.querySelector('h2');
-        h2.innerHTML = `勝利！ ${earnedMoney}円獲得！<br>好きなスライムを1体選んでね`;
         
         const uniqueEnemies = [];
         const seenIds = new Set();
@@ -1529,7 +1369,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (enemy.rarity === 'common') card.classList.add('rarity-common');
             else if (enemy.rarity === 'uncommon') card.classList.add('rarity-uncommon');
             else if (enemy.rarity === 'rare') card.classList.add('rarity-rare');
-            else if (enemy.rarity === 'legendary') card.classList.add('rarity-legendary');
 
             const img = document.createElement('img');
             img.src = enemy.image;
