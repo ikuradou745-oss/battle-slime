@@ -1,15 +1,14 @@
 // ============================================================================
-// ※レアリティシステムのメモ※
-// レアリティは以下の4種類のみ存在します。
-// ・コモン（グレー） = 1
-// ・アンコモン（緑） = 2
-// ・レア（青） = 3
-// ・レジェンド（黄色） = 4
-// ※コモンから順に強くなっていきます。
-// ※戦闘勝利時の獲得金計算において、この数値が直接乗算されます。
+// コンソールの無効化
+// ============================================================================
+console.log = function() {};
+console.warn = function() {};
+console.error = function() {};
+
+// ============================================================================
+// キャラクターデータ
 // ============================================================================
 
-// キャラクターデータ
 const characterDatabase = [
     {
         id: "slime_01",
@@ -35,7 +34,7 @@ const characterDatabase = [
         rarity: "uncommon",
         hp: 10,
         attack: 1,
-        ability: "相手を3ターン毒状態にする（毎ターン1ダメージ）",
+        ability: "相手を3ターン毒状態にする（毒状態になると毎ターン1ダメージ喰らいます。）",
         image: "./gazou/グリーンスライム.png"
     },
     {
@@ -44,7 +43,7 @@ const characterDatabase = [
         rarity: "uncommon",
         hp: 8,
         attack: 1,
-        ability: "3回の攻撃に1回「レーザー攻撃」（攻撃力1.5）。相手を1ターン気絶させる。",
+        ability: "3回の攻撃に1回「レーザー攻撃」を行う（攻撃力1.5）。相手を1ターン気絶させる。",
         image: "./gazou/magentaslime.png"
     },
     {
@@ -66,47 +65,51 @@ const characterDatabase = [
         image: "./gazou/orangeslime.png"
     },
     {
-        id: "slime_07",
+        id: "slime_life",
         name: "ライフスライム",
         rarity: "rare",
-        hp: 25,
+        hp: 15,
         attack: 0.5,
-        ability: "非常に高いHPを誇る耐久特化のスライム。",
-        image: "./gazou/lifeslime.png" // ※適当な画像をご用意ください
+        ability: "なし",
+        image: "./gazou/lifeslime.png"
     },
     {
-        id: "slime_08",
+        id: "slime_money",
         name: "マネースライム",
         rarity: "rare",
         hp: 1,
         attack: 0.1,
-        ability: "装備しているだけで、試合に勝った時もらえるお金が倍になる。",
+        ability: "装備しているだけで、試合に勝った時もらえるお金が倍になる",
         image: "./gazou/moneyslime.png"
     },
     {
-        id: "slime_09",
+        id: "slime_hammer",
         name: "ハンマースライム",
         rarity: "legendary",
         hp: 13.5,
         attack: 0.8,
-        ability: "最初のターン、HPが8の壁を設置。壁破壊後、自身が3回行動したら再設置。",
+        ability: "最初のターン、HPが8の壁をスポーンさせます。そして壁が壊れたら、また3ターンしたらもう一度壁を設置します。",
         image: "./gazou/hammerslime.png"
     }
 ];
 
-// タイピング用辞書データ
+// ============================================================================
+// タイピング用辞書データ (ローマ字入力完全一致用)
+// ============================================================================
 const typingWords = [
     { jp: "すらいむ", en: "suraimu" },
     { jp: "こうげき", en: "kougeki" },
     { jp: "ばとる", en: "batoru" },
     { jp: "たいぴんぐ", en: "taipingu" },
     { jp: "まほう", en: "mahou" },
-    { jp: "けん", en: "ken" },
-    { jp: "れじぇんど", en: "rejendo" },
-    { jp: "おかね", en: "okane" }
+    { jp: "けん", en: "ken" }
 ];
 
+// ============================================================================
 // アニメーション用ヘルパー関数と動的CSS
+// ============================================================================
+
+// レーザーアニメーション
 function playLaserAnimation(attackerDom, defenderDom, speed) {
     if (!attackerDom || !defenderDom) return;
     const aRect = attackerDom.getBoundingClientRect();
@@ -140,6 +143,7 @@ function playLaserAnimation(attackerDom, defenderDom, speed) {
     }, 300 / speed);
 }
 
+// 切りつけアニメーション
 function playSlashAnimation(targetDom, speed) {
     if (!targetDom) return;
     const tRect = targetDom.getBoundingClientRect();
@@ -160,6 +164,7 @@ function playSlashAnimation(targetDom, speed) {
     }, 300 / speed);
 }
 
+// 動的CSSの追加
 const animStyle = document.createElement('style');
 animStyle.textContent = `
     .laser-beam {
