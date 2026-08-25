@@ -1,9 +1,8 @@
-// ============================================================================
 // コンソールの無効化
-// ============================================================================
-console.log = function() {};
-console.warn = function() {};
-console.error = function() {};
+console.log = function(){};
+console.warn = function(){};
+console.error = function(){};
+console.info = function(){};
 
 // ============================================================================
 // キャラクターデータ
@@ -68,9 +67,9 @@ const characterDatabase = [
         id: "slime_life",
         name: "ライフスライム",
         rarity: "rare",
-        hp: 15,
+        hp: 20,
         attack: 0.5,
-        ability: "なし",
+        ability: "体力に優れたスライム。",
         image: "./gazou/lifeslime.png"
     },
     {
@@ -79,7 +78,7 @@ const characterDatabase = [
         rarity: "rare",
         hp: 1,
         attack: 0.1,
-        ability: "装備しているだけで、試合に勝った時もらえるお金が倍になる",
+        ability: "装備しているだけで、試合に勝った時もらえるお金が倍になる。",
         image: "./gazou/moneyslime.png"
     },
     {
@@ -88,7 +87,7 @@ const characterDatabase = [
         rarity: "legendary",
         hp: 13.5,
         attack: 0.8,
-        ability: "最初のターン、HPが8の壁をスポーンさせます。そして壁が壊れたら、また3ターンしたらもう一度壁を設置します。",
+        ability: "最初のターン、HPが8の壁をスポーンさせます。壁が壊れたら、3ターン後にもう一度壁を設置します。",
         image: "./gazou/hammerslime.png"
     }
 ];
