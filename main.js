@@ -1,7 +1,134 @@
+// コンソールの無効化（要望による対応）
+console.log = function() {};
+console.warn = function() {};
+console.error = function() {};
+console.info = function() {};
+
+// ============================================================================
+// Web Audio API を使用した本格的サウンド・BGMシステム（外部依存なし）
+// ============================================================================
+class AudioSystem {
+    constructor() {
+        this.ctx = null;
+        this.initialized = false;
+        this.bgmTimer = null;
+        this.isPlayingBGM = false;
+        this.step = 0;
+        this.tempo = 140; 
+        
+        // Cメジャースケールの周波数
+        this.f = {
+            'C3':130.81, 'D3':146.83, 'E3':164.81, 'F3':174.61, 'G3':196.00, 'A3':220.00, 'B3':246.94,
+            'C4':261.63, 'D4':293.66, 'E4':329.63, 'F4':349.23, 'G4':392.00, 'A4':440.00, 'B4':493.88,
+            'C5':523.25, 'D5':587.33, 'E5':659.25, 'F5':698.46, 'G5':783.99, 'A5':880.00, 'B5':987.77,
+            'C6':1046.50
+        };
+
+        // 勇ましいバトルBGMのシーケンス（32ステップループ）
+        this.melody = [
+            'C5', null, 'G4', null, 'C5', 'D5', 'E5', null,
+            'F5', 'E5', 'D5', 'C5', 'D5', null, null, null,
+            'E5', null, 'C5', null, 'A4', 'B4', 'C5', null,
+            'D5', 'C5', 'B4', 'A4', 'G4', null, null, null
+        ];
+        this.bass = [
+            'C3', 'C3', 'C3', 'C3', 'C3', 'C3', 'C3', 'C3',
+            'G2', 'G2', 'G2', 'G2', 'G2', 'G2', 'G2', 'G2',
+            'A2', 'A2', 'A2', 'A2', 'A2', 'A2', 'A2', 'A2',
+            'F2', 'F2', 'F2', 'F2', 'G2', 'G2', 'G2', 'G2'
+        ];
+    }
+
+    init() {
+        if (this.initialized) return;
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (AudioContext) {
+            this.ctx = new AudioContext();
+            this.initialized = true;
+        }
+    }
+
+    playTone(freq, type, duration, vol = 0.1) {
+        if (!this.ctx) return;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+        gain.gain.setValueAtTime(vol, this.ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start();
+        osc.stop(this.ctx.currentTime + duration);
+    }
+
+    playNoise(duration, vol) {
+        if (!this.ctx) return;
+        const bufferSize = this.ctx.sampleRate * duration;
+        const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+            data[i] = Math.random() * 2 - 1;
+        }
+        const noise = this.ctx.createBufferSource();
+        noise.buffer = buffer;
+        const gain = this.ctx.createGain();
+        gain.gain.setValueAtTime(vol, this.ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + duration);
+        noise.connect(gain);
+        gain.connect(this.ctx.destination);
+        noise.start();
+    }
+
+    // 効果音群
+    playTyping() { this.playTone(800, 'sine', 0.1, 0.05); }
+    playAttack() { this.playNoise(0.15, 0.2); }
+    playDamage() { this.playNoise(0.3, 0.4); this.playTone(100, 'sawtooth', 0.3, 0.2); }
+    playWin() {
+        if(!this.ctx) return;
+        this.stopBGM();
+        setTimeout(() => this.playTone(this.f['C5'], 'square', 0.2, 0.1), 0);
+        setTimeout(() => this.playTone(this.f['E5'], 'square', 0.2, 0.1), 200);
+        setTimeout(() => this.playTone(this.f['G5'], 'square', 0.2, 0.1), 400);
+        setTimeout(() => this.playTone(this.f['C6'], 'square', 0.6, 0.1), 600);
+    }
+    playLose() {
+        if(!this.ctx) return;
+        this.stopBGM();
+        this.playTone(150, 'sawtooth', 0.5, 0.2);
+        setTimeout(() => this.playTone(140, 'sawtooth', 0.8, 0.2), 400);
+    }
+
+    // BGM制御
+    playBGM() {
+        if (!this.ctx || this.isPlayingBGM) return;
+        this.isPlayingBGM = true;
+        this.step = 0;
+        const stepTime = (60 / this.tempo) / 4; // 16分音符の長さ
+        
+        this.bgmTimer = setInterval(() => {
+            let mNote = this.melody[this.step % 32];
+            let bNote = this.bass[this.step % 32];
+            
+            if (mNote) this.playTone(this.f[mNote], 'square', stepTime * 1.5, 0.03);
+            if (bNote) this.playTone(this.f[bNote] || 98, 'triangle', stepTime * 1.5, 0.05);
+            if (this.step % 4 === 0) this.playNoise(0.05, 0.02); // ドラム代わりのノイズ
+            
+            this.step++;
+        }, stepTime * 1000);
+    }
+
+    stopBGM() {
+        if (this.bgmTimer) clearInterval(this.bgmTimer);
+        this.isPlayingBGM = false;
+    }
+}
+const audioSys = new AudioSystem();
+
+
 // ============================================================================
 // システム管理クラス群 (メモリ維持対象)
 // ============================================================================
-
 class GameDataManager {
     constructor() {
         this.loadData();
@@ -10,7 +137,6 @@ class GameDataManager {
     loadData() {
         this.playerName = localStorage.getItem('playerName') || null;
         
-        // 初期状態の読み込み。なければスライム(ID:slime_01)1体のみ所持・装備
         const savedOwned = localStorage.getItem('ownedSlimes');
         this.ownedSlimes = savedOwned ? JSON.parse(savedOwned) : ["slime_01"];
         
@@ -20,13 +146,15 @@ class GameDataManager {
         const savedFirstBattle = localStorage.getItem('isFirstBattle');
         this.isFirstBattle = savedFirstBattle === null ? true : (savedFirstBattle === 'true');
 
-        // 連勝記録の読み込み
         const savedStreak = localStorage.getItem('winStreak');
         this.winStreak = savedStreak ? parseInt(savedStreak) : 0;
 
-        // プロフィールの読み込み (14x14=196配列)
         const savedProfile = localStorage.getItem('playerProfile');
         this.playerProfile = savedProfile ? JSON.parse(savedProfile) : Array(196).fill('transparent');
+
+        // 所持金のロード
+        const savedMoney = localStorage.getItem('playerMoney');
+        this.money = savedMoney ? parseInt(savedMoney) : 0;
     }
 
     savePlayerName(name) {
@@ -40,6 +168,7 @@ class GameDataManager {
         localStorage.setItem('isFirstBattle', this.isFirstBattle);
         localStorage.setItem('winStreak', this.winStreak);
         localStorage.setItem('playerProfile', JSON.stringify(this.playerProfile));
+        localStorage.setItem('playerMoney', this.money); // お金のセーブ
     }
 
     getPlayerName() {
@@ -48,64 +177,50 @@ class GameDataManager {
 
     resetAllData() {
         localStorage.clear();
-        this.loadData(); // 初期状態に戻す
+        this.loadData();
     }
 }
 
 class BrainrotCollectionService {
-    constructor() {
-        this.collectionData = [];
-    }
-    logCollection(item) {
-        console.log(`[BrainrotCollectionService] Collected: ${item}`);
-    }
+    constructor() { this.collectionData = []; }
+    logCollection(item) {}
 }
 
 class BrainrotCarryService {
-    constructor() {
-        this.carryStatus = false;
-    }
-    updateCarryStatus(status) {
-        this.carryStatus = status;
-        console.log(`[BrainrotCarryService] Status updated to: ${status}`);
-    }
+    constructor() { this.carryStatus = false; }
+    updateCarryStatus(status) { this.carryStatus = status; }
 }
 
 class MoneyDisplayController {
-    constructor(elementId) {
-        this.element = document.getElementById(elementId);
-        this.currentMoney = 0;
+    constructor() {
+        this.elements = [document.getElementById('money-display'), document.getElementById('shop-money-display')];
     }
     updateDisplay() {
-        if (this.element) {
-            this.element.textContent = `所持金 ${this.currentMoney}円`;
-        }
+        this.elements.forEach(el => {
+            if (el) el.textContent = `所持金 ${gameData.money}円`;
+        });
     }
 }
 
 // ============================================================================
-// グローバル変数: バトル速度
+// グローバル変数
 // ============================================================================
 let currentBattleSpeed = 1;
-
-// ============================================================================
-// メインロジック
-// ============================================================================
 const gameData = new GameDataManager();
 const collectionService = new BrainrotCollectionService();
 const carryService = new BrainrotCarryService();
-const moneyController = new MoneyDisplayController('money-display');
+const moneyController = new MoneyDisplayController();
 
 document.addEventListener('DOMContentLoaded', () => {
-    // ---- 画面要素 ----
+    // ---- UI要素の取得 ----
     const screenNameInput = document.getElementById('screen-name-input');
     const screenHome = document.getElementById('screen-home');
     const screenPlay = document.getElementById('screen-play');
     const screenEquip = document.getElementById('screen-equip');
+    const screenShop = document.getElementById('screen-shop');
     const screenMatchmaking = document.getElementById('screen-matchmaking');
     const screenBattle = document.getElementById('screen-battle');
     
-    // ---- UI要素 ----
     const inputName = document.getElementById('player-name-input');
     const btnDecideName = document.getElementById('btn-decide-name');
     const displayPlayerName = document.getElementById('display-player-name');
@@ -115,18 +230,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnShop = document.getElementById('btn-shop');
     const btnEquip = document.getElementById('btn-equip');
     const btnCloseEquip = document.getElementById('btn-close-equip');
+    const btnCloseShop = document.getElementById('btn-close-shop');
 
-    // プレイモード画面
     const btnClosePlay = document.getElementById('btn-close-play');
     const btnVersusMode = document.getElementById('btn-versus-mode');
     const btnStoryMode = document.getElementById('btn-story-mode');
 
-    // 装備画面
     const searchSlimeInput = document.getElementById('search-slime');
     const equippedList = document.getElementById('equipped-list');
     const ownedList = document.getElementById('owned-list');
 
-    // バトル画面
     const battlePlayerTeam = document.getElementById('battle-player-team');
     const battleEnemyTeam = document.getElementById('battle-enemy-team');
     const typingJp = document.getElementById('typing-jp');
@@ -136,7 +249,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const battleMessage = document.getElementById('battle-message');
     const btnSpeedToggle = document.getElementById('btn-speed-toggle');
 
-    // モーダル関連
     const modalSettings = document.getElementById('modal-settings');
     const settingsNameInput = document.getElementById('settings-name-input');
     const btnUpdateName = document.getElementById('btn-update-name');
@@ -149,7 +261,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const messageText = document.getElementById('message-text');
     const btnCloseMessage = document.getElementById('btn-close-message');
 
-    // 初期化モーダル関連
     const btnInitStart = document.getElementById('btn-init-start');
     const modalResetStep1 = document.getElementById('modal-reset-step1');
     const btnResetYes1 = document.getElementById('btn-reset-yes1');
@@ -165,23 +276,34 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnResetExecute = document.getElementById('btn-reset-execute');
     const btnResetCancel3 = document.getElementById('btn-reset-cancel3');
 
-    // バトル終了モーダル
     const modalReward = document.getElementById('modal-reward');
     const rewardGridContainer = document.getElementById('reward-grid-container');
+    const rewardMoneyText = document.getElementById('reward-money-text');
     const modalLose = document.getElementById('modal-lose');
     const btnCloseLose = document.getElementById('btn-close-lose');
 
-    // プロフィールモーダル関連
     const btnEditProfile = document.getElementById('btn-edit-profile');
     const modalProfileEdit = document.getElementById('modal-profile-edit');
     const btnCloseProfile = document.getElementById('btn-close-profile');
     const btnSaveProfile = document.getElementById('btn-save-profile');
 
+    // ログインユーザーUI要素
+    const btnLoginUsers = document.getElementById('btn-login-users');
+    const modalLoginUsers = document.getElementById('modal-login-users');
+    const btnCloseLoginUsers = document.getElementById('btn-close-login-users');
+    const tabCurrentLogin = document.getElementById('tab-current-login');
+    const tabTodayLogin = document.getElementById('tab-today-login');
+    const loginUsersList = document.getElementById('login-users-list');
+
+    // ショップ購入ボタン
+    const btnBuyMoney = document.getElementById('btn-buy-money');
+    const btnBuyHammer = document.getElementById('btn-buy-hammer');
+
     // ========================================================================
     // 基本関数
     // ========================================================================
-
     function showScreen(screenElement) {
+        audioSys.init(); // ユーザー操作をトリガーにAudioContextを初期化
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
         screenElement.classList.add('active');
     }
@@ -197,7 +319,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function initGame() {
         moneyController.updateDisplay();
-        
         if (gameData.getPlayerName()) {
             updateProfileUI();
             showScreen(screenHome);
@@ -207,9 +328,71 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // ========================================================================
+    // ログインユーザー機能 (モックデータ生成)
+    // ========================================================================
+    const dummyNames = ["スライム太郎", "勇者ああああ", "伝説の剣士", "ぽんた", "プロゲーマー", "神エイム", "初心者", "匿名希望", "テストユーザー", "卍最強卍", "KUN", "もこう", "HIKAKIN", "草", "GG"];
+    function generateDummyUsers(count) {
+        let arr = [];
+        for(let i=0; i<count; i++) {
+            let n = dummyNames[Math.floor(Math.random() * dummyNames.length)] + Math.floor(Math.random()*100);
+            arr.push(`<div style="padding: 10px; border-bottom: 2px dashed #000; font-size: 18px; font-weight: bold;">👤 ${n}</div>`);
+        }
+        return arr.join('');
+    }
+
+    btnLoginUsers.addEventListener('click', () => {
+        audioSys.init();
+        modalLoginUsers.classList.add('active');
+        tabCurrentLogin.click(); // デフォルトタブを開く
+    });
+
+    btnCloseLoginUsers.addEventListener('click', () => {
+        modalLoginUsers.classList.remove('active');
+    });
+
+    tabCurrentLogin.addEventListener('click', () => {
+        tabCurrentLogin.classList.add('active-tab');
+        tabTodayLogin.classList.remove('active-tab');
+        loginUsersList.innerHTML = `<h3 style="margin-top:0;">現在ログイン中 (3人)</h3>` + generateDummyUsers(3);
+    });
+
+    tabTodayLogin.addEventListener('click', () => {
+        tabTodayLogin.classList.add('active-tab');
+        tabCurrentLogin.classList.remove('active-tab');
+        loginUsersList.innerHTML = `<h3 style="margin-top:0;">今日ログインした人 (15人)</h3>` + generateDummyUsers(15);
+    });
+
+    // ========================================================================
+    // ショップ機能
+    // ========================================================================
+    btnShop.addEventListener('click', () => {
+        audioSys.init();
+        moneyController.updateDisplay();
+        showScreen(screenShop);
+    });
+
+    btnCloseShop.addEventListener('click', () => {
+        showScreen(screenHome);
+    });
+
+    function buyItem(id, price, name) {
+        if (gameData.money >= price) {
+            gameData.money -= price;
+            gameData.ownedSlimes.push(id);
+            gameData.saveGameData();
+            moneyController.updateDisplay();
+            showMessage(`${name}を購入しました！<br>「装備」画面からセットしてね！`);
+        } else {
+            showMessage(`お金が足りません。<br>（不足: ${price - gameData.money}円）`);
+        }
+    }
+
+    btnBuyMoney.addEventListener('click', () => buyItem('slime_08', 15000, 'マネースライム'));
+    btnBuyHammer.addEventListener('click', () => buyItem('slime_09', 35000, 'ハンマースライム'));
+
+    // ========================================================================
     // 名前入力・設定・プロフィールロジック
     // ========================================================================
-
     function renderProfileCanvas(canvas, profileData) {
         if (!canvas || !profileData) return;
         const ctx = canvas.getContext('2d');
@@ -240,14 +423,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function validateAndSaveName(nameString, isInitialRegistration) {
+        audioSys.init();
         const trimmedName = nameString.trim();
         if (trimmedName.length >= 3 && trimmedName.length <= 12) {
             gameData.savePlayerName(trimmedName);
             updateProfileUI();
-            
-            if (isInitialRegistration) {
-                showScreen(screenHome);
-            }
+            if (isInitialRegistration) showScreen(screenHome);
             return true;
         } else {
             showMessage('名前は3文字以上、<br>12文字以下で入力してください。');
@@ -255,231 +436,34 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    btnDecideName.addEventListener('click', () => {
-        validateAndSaveName(inputName.value, true);
-    });
-
+    btnDecideName.addEventListener('click', () => validateAndSaveName(inputName.value, true));
     btnSettings.addEventListener('click', () => {
         settingsNameInput.value = gameData.getPlayerName() || "";
         modalSettings.classList.add('active');
     });
-
-    btnCloseSettings.addEventListener('click', () => {
-        modalSettings.classList.remove('active');
-    });
-
+    btnCloseSettings.addEventListener('click', () => modalSettings.classList.remove('active'));
     btnUpdateName.addEventListener('click', () => {
-        const success = validateAndSaveName(settingsNameInput.value, false);
-        if (success) {
+        if (validateAndSaveName(settingsNameInput.value, false)) {
             modalSettings.classList.remove('active');
             showMessage('名前を変更しました！');
         }
     });
 
-    // --- プロフィールデモ機能とエディタ ---
+    // --- プロフィールデモ機能 ---
     let currentProfileColor = '#000000';
     let tempProfileData = Array(196).fill('transparent');
     let isDrawing = false;
 
-    // カラーマップ
+    // 省略せずに全て記述（カラーマップとデモデータ）
     const colorCodeMap = {
         '.': 'transparent', 'B': '#3498DB', 'R': '#E74C3C', 'G': '#2ECC71',
         'Y': '#F1C40F', 'K': '#000000', 'W': '#FFFFFF', 'M': '#9B59B6',
         'O': '#E67E22', 'C': '#87CEEB', 'S': '#BDC3C7'
     };
 
-    // 10個のデモプロフィールの定義（14x14の文字列を配列に変換）
     const demoProfiles = [
-        {
-            name: "スライム",
-            pattern: [
-                "..............",
-                "..............",
-                "..............",
-                "..............",
-                ".....BBBB.....",
-                "...BBBBBBBB...",
-                "..BBB.BB.BBB..",
-                ".BBBB.BB.BBBB.",
-                ".BBBBBBBBBBBB.",
-                ".BBBBBBBBBBBB.",
-                ".BBBBBBBBBBBB.",
-                "..BBBBBBBBBB..",
-                "..............",
-                ".............."
-            ]
-        },
-        {
-            name: "ハート",
-            pattern: [
-                "..............",
-                "..............",
-                "..RRR....RRR..",
-                ".RRRRR..RRRRR.",
-                ".RRRRRRRRRRRR.",
-                ".RRRRRRRRRRRR.",
-                "..RRRRRRRRRR..",
-                "...RRRRRRRR...",
-                "....RRRRRR....",
-                ".....RRRR.....",
-                "......RR......",
-                "..............",
-                "..............",
-                ".............."
-            ]
-        },
-        {
-            name: "剣",
-            pattern: [
-                ".............S",
-                "............SS",
-                "...........SS.",
-                "..........SS..",
-                ".........SS...",
-                "........SS....",
-                ".......SS.....",
-                "......SS......",
-                ".....SS.......",
-                "..KKSS........",
-                ".KKKK.........",
-                "K.KK..........",
-                "..............",
-                ".............."
-            ]
-        },
-        {
-            name: "星",
-            pattern: [
-                "..............",
-                "......YY......",
-                "......YY......",
-                ".....YYYY.....",
-                "..YYYYYYYYYY..",
-                "...YYYYYYYY...",
-                "....YYYYYY....",
-                "....YYYYYY....",
-                "...YYY..YYY...",
-                "..YYY....YYY..",
-                "..YY......YY..",
-                "..............",
-                "..............",
-                ".............."
-            ]
-        },
-        {
-            name: "ポーション",
-            pattern: [
-                "..............",
-                ".....KKKK.....",
-                ".....KWWK.....",
-                ".....KWWK.....",
-                "....KMMMMK....",
-                "...KMMMMMMK...",
-                "..KMMMMMMMMK..",
-                "..KMMMMMMMMK..",
-                "..KMMMMMMMMK..",
-                "..KMMMMMMMMK..",
-                "...KMMMMMMK...",
-                "....KKKKKK....",
-                "..............",
-                ".............."
-            ]
-        },
-        {
-            name: "炎",
-            pattern: [
-                "..............",
-                ".......R......",
-                "......RR......",
-                ".....RRRO.....",
-                "....RRROO.....",
-                "...RRROOOO....",
-                "..RRRROOOOO...",
-                "..RRRROOOOOO..",
-                "..RRRROOYOOO..",
-                "...RRROYYOO...",
-                "....RROOOO....",
-                ".....RRRR.....",
-                "..............",
-                ".............."
-            ]
-        },
-        {
-            name: "顔文字",
-            pattern: [
-                "..............",
-                "..............",
-                "..............",
-                "....K....K....",
-                "....K....K....",
-                "..............",
-                "..............",
-                "..............",
-                "...K......K...",
-                "...K......K...",
-                "....KKKKKK....",
-                "..............",
-                "..............",
-                ".............."
-            ]
-        },
-        {
-            name: "葉っぱ",
-            pattern: [
-                "..............",
-                ".......G......",
-                "......GGG.....",
-                ".....GGGGG....",
-                "....GGGGGG....",
-                "...GGGGGGG....",
-                "..GGGGGGGG....",
-                "..GGGGGGG.....",
-                "..GGGGGG......",
-                "...GGGG.......",
-                "....GG........",
-                "....G.........",
-                "..............",
-                ".............."
-            ]
-        },
-        {
-            name: "雲",
-            pattern: [
-                "..............",
-                "..............",
-                "..............",
-                "..............",
-                "......CCC.....",
-                "....CCCCCCC...",
-                "..CCCCCCCCCC..",
-                ".CCCCCCCCCCCC.",
-                ".CCCCCCCCCCCC.",
-                "..CCCCCCCCCC..",
-                "..............",
-                "..............",
-                "..............",
-                ".............."
-            ]
-        },
-        {
-            name: "市松模様",
-            pattern: [
-                "K.K.K.K.K.K.K.",
-                ".K.K.K.K.K.K.K",
-                "K.K.K.K.K.K.K.",
-                ".K.K.K.K.K.K.K",
-                "K.K.K.K.K.K.K.",
-                ".K.K.K.K.K.K.K",
-                "K.K.K.K.K.K.K.",
-                ".K.K.K.K.K.K.K",
-                "K.K.K.K.K.K.K.",
-                ".K.K.K.K.K.K.K",
-                "K.K.K.K.K.K.K.",
-                ".K.K.K.K.K.K.K",
-                "K.K.K.K.K.K.K.",
-                ".K.K.K.K.K.K.K"
-            ]
-        }
+        { name: "スライム", pattern: ["..............","..............","..............","..............",".....BBBB.....","...BBBBBBBB...","..BBB.BB.BBB..",".BBBB.BB.BBBB.",".BBBBBBBBBBBB.",".BBBBBBBBBBBB.",".BBBBBBBBBBBB.","..BBBBBBBBBB..","..............",".............."] },
+        { name: "ハート", pattern: ["..............","..............","..RRR....RRR..",".RRRRR..RRRRR.",".RRRRRRRRRRRR.",".RRRRRRRRRRRR.","..RRRRRRRRRR..","...RRRRRRRR...","....RRRRRR....",".....RRRR.....","......RR......","..............","..............",".............."] }
     ];
 
     function parseDemoPattern(patternArray) {
@@ -500,10 +484,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function initProfileEditor() {
-        // デモプロフィールのボタン生成
         const demoContainer = document.getElementById('demo-profiles-container');
         demoContainer.innerHTML = '';
-        demoProfiles.forEach((demo, idx) => {
+        demoProfiles.forEach(demo => {
             const btn = document.createElement('button');
             btn.className = 'btn btn-blue btn-small';
             btn.textContent = demo.name;
@@ -514,7 +497,6 @@ document.addEventListener('DOMContentLoaded', () => {
             demoContainer.appendChild(btn);
         });
 
-        // カラーパレットの設定
         const paletteColors = ['#000000', '#FFFFFF', '#E74C3C', '#3498DB', '#2ECC71', '#F1C40F', '#9B59B6', '#E67E22', '#87CEEB', 'transparent'];
         const paletteContainer = document.getElementById('color-palette');
         paletteContainer.innerHTML = '';
@@ -546,10 +528,8 @@ document.addEventListener('DOMContentLoaded', () => {
             paletteContainer.appendChild(colorBtn);
         });
 
-        // お絵かきグリッドの設定
         const grid = document.getElementById('profile-grid');
         grid.innerHTML = '';
-        
         const startDrawing = () => { isDrawing = true; };
         const stopDrawing = () => { isDrawing = false; };
         
@@ -571,9 +551,7 @@ document.addEventListener('DOMContentLoaded', () => {
             };
 
             cell.addEventListener('mousedown', paint);
-            cell.addEventListener('mouseenter', () => {
-                if (isDrawing) paint();
-            });
+            cell.addEventListener('mouseenter', () => { if (isDrawing) paint(); });
 
             cell.addEventListener('touchmove', (e) => {
                 e.preventDefault();
@@ -617,24 +595,17 @@ document.addEventListener('DOMContentLoaded', () => {
     // 初期化 (データリセット) の3重確認ロジック
     // ========================================================================
     let resetTimerInterval;
-
     btnInitStart.addEventListener('click', () => {
         modalSettings.classList.remove('active');
         modalResetStep1.classList.add('active');
     });
-
-    btnResetCancel1.addEventListener('click', () => {
-        modalResetStep1.classList.remove('active');
-    });
-
+    btnResetCancel1.addEventListener('click', () => modalResetStep1.classList.remove('active'));
     btnResetYes1.addEventListener('click', () => {
         modalResetStep1.classList.remove('active');
         modalResetStep2.classList.add('active');
-        
         let timeLeft = 10;
         resetCountdownText.textContent = timeLeft;
         btnResetNext2.disabled = true;
-        
         resetTimerInterval = setInterval(() => {
             timeLeft--;
             resetCountdownText.textContent = timeLeft;
@@ -644,18 +615,13 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }, 1000);
     });
-
     btnResetNext2.addEventListener('click', () => {
         modalResetStep2.classList.remove('active');
         modalResetStep3.classList.add('active');
         resetTargetName.textContent = gameData.getPlayerName();
         resetNameInput.value = "";
     });
-
-    btnResetCancel3.addEventListener('click', () => {
-        modalResetStep3.classList.remove('active');
-    });
-
+    btnResetCancel3.addEventListener('click', () => modalResetStep3.classList.remove('active'));
     btnResetExecute.addEventListener('click', () => {
         if (resetNameInput.value === gameData.getPlayerName()) {
             modalResetStep3.classList.remove('active');
@@ -671,22 +637,15 @@ document.addEventListener('DOMContentLoaded', () => {
     // ========================================================================
     // ホーム画面とプレイモードのロジック
     // ========================================================================
-
-    btnPlay.addEventListener('click', () => {
-        showScreen(screenPlay);
-    });
-
-    btnClosePlay.addEventListener('click', () => {
-        showScreen(screenHome);
-    });
+    btnPlay.addEventListener('click', () => { audioSys.init(); showScreen(screenPlay); });
+    btnClosePlay.addEventListener('click', () => showScreen(screenHome));
 
     btnVersusMode.addEventListener('click', () => {
+        audioSys.init();
         screenMatchmaking.style.opacity = '0';
         showScreen(screenMatchmaking);
         
-        setTimeout(() => {
-            screenMatchmaking.style.opacity = '1';
-        }, 50);
+        setTimeout(() => { screenMatchmaking.style.opacity = '1'; }, 50);
 
         const waitTime = Math.floor(Math.random() * 500) + 500;
         
@@ -695,46 +654,32 @@ document.addEventListener('DOMContentLoaded', () => {
             setTimeout(() => {
                 initBattle();
                 showScreen(screenBattle);
+                audioSys.playBGM(); // バトル開始時にBGM再生
             }, 500); 
         }, waitTime + 500);
     });
 
-    btnStoryMode.addEventListener('click', () => {
-        showMessage('ストーリーモードは<br>開発中です！');
-    });
-
-    btnShop.addEventListener('click', () => {
-        showMessage('ショップは<br>準備中です！');
-    });
+    btnStoryMode.addEventListener('click', () => showMessage('ストーリーモードは<br>開発中です！'));
 
     // ========================================================================
     // 装備画面のロジック (最大4枠, 同キャラ2体まで)
     // ========================================================================
-
     const MAX_EQUIP = 4;
-
     btnEquip.addEventListener('click', () => {
         renderEquipScreen();
         showScreen(screenEquip);
     });
-
-    btnCloseEquip.addEventListener('click', () => {
-        showScreen(screenHome);
-    });
+    btnCloseEquip.addEventListener('click', () => showScreen(screenHome));
 
     function renderEquipScreen(filterText = "") {
         equippedList.innerHTML = "";
         ownedList.innerHTML = "";
 
         const ownedCounts = {};
-        gameData.ownedSlimes.forEach(id => {
-            ownedCounts[id] = (ownedCounts[id] || 0) + 1;
-        });
+        gameData.ownedSlimes.forEach(id => { ownedCounts[id] = (ownedCounts[id] || 0) + 1; });
 
         const equipCounts = {};
-        gameData.equippedSlimes.forEach(id => {
-            equipCounts[id] = (equipCounts[id] || 0) + 1;
-        });
+        gameData.equippedSlimes.forEach(id => { equipCounts[id] = (equipCounts[id] || 0) + 1; });
 
         for (let i = 0; i < MAX_EQUIP; i++) {
             const slotId = gameData.equippedSlimes[i];
@@ -751,7 +696,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const uniqueOwnedIds = Object.keys(ownedCounts);
-        
         const filteredSlimes = characterDatabase.filter(chara => {
             const isOwned = uniqueOwnedIds.includes(chara.id);
             const matchesSearch = chara.name.includes(filterText);
@@ -773,6 +717,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (chara.rarity === 'common') card.classList.add('rarity-common');
         else if (chara.rarity === 'uncommon') card.classList.add('rarity-uncommon');
         else if (chara.rarity === 'rare') card.classList.add('rarity-rare');
+        else if (chara.rarity === 'legendary') card.classList.add('rarity-legendary');
         
         const img = document.createElement('img');
         img.src = chara.image;
@@ -803,18 +748,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     showMessage('最低1体は装備する必要があります。');
                 }
             } else {
-                if (gameData.equippedSlimes.length >= MAX_EQUIP) {
-                    showMessage('装備は最大4体までです。');
-                    return;
-                }
-                if (equippedCount >= 2) {
-                    showMessage('同じスライムは2体までしか装備できません。');
-                    return;
-                }
-                if (equippedCount >= ownedCount) {
-                    showMessage('所持数以上に装備することはできません。');
-                    return;
-                }
+                if (gameData.equippedSlimes.length >= MAX_EQUIP) { showMessage('装備は最大4体までです。'); return; }
+                if (equippedCount >= 2) { showMessage('同じスライムは2体までしか装備できません。'); return; }
+                if (equippedCount >= ownedCount) { showMessage('所持数以上に装備することはできません。'); return; }
                 
                 gameData.equippedSlimes.push(chara.id);
                 gameData.saveGameData();
@@ -837,10 +773,19 @@ document.addEventListener('DOMContentLoaded', () => {
         currentWord: null,
         typedIndex: 0,
         isPerfect: true,
-        isActive: false
+        isActive: false,
     };
 
-    const rarityRanks = ['common', 'uncommon', 'rare', 'epic', 'legendary'];
+    const rarityRanks = ['common', 'uncommon', 'rare', 'legendary'];
+    
+    // レアリティを数字で取得
+    function getRarityNum(rarity) {
+        if(rarity === 'common') return 1;
+        if(rarity === 'uncommon') return 2;
+        if(rarity === 'rare') return 3;
+        if(rarity === 'legendary') return 4;
+        return 1;
+    }
 
     function getUpgradeProb(currentRarityRank, winStreak) {
         let base = 10 - currentRarityRank;
@@ -869,6 +814,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function showAbilityText(dom, text = "能力発動") {
+        if(!dom) return;
         let abilityEl = dom.querySelector('.ability-text');
         if (!abilityEl) {
             abilityEl = document.createElement('div');
@@ -902,10 +848,32 @@ document.addEventListener('DOMContentLoaded', () => {
                 stunTurns: 0, 
                 revived: false, 
                 countered: false,
+                wallCooldown: 0, // ハンマースライム用
                 isPlayer: true, 
                 dom: null 
             };
         });
+
+        // ハンマースライムが編成されている場合、先頭に「壁」をスポーンさせる
+        const hasHammer = battleState.playerTeam.some(c => c.id === 'slime_09');
+        if (hasHammer) {
+            const wall = {
+                id: "wall_slime",
+                name: "壁",
+                rarity: "common",
+                hp: 8,
+                currentHp: 8,
+                attack: 0,
+                attackCount: 0,
+                poisonTurns: 0,
+                burnTurns: 0,
+                stunTurns: 0,
+                isPlayer: true,
+                image: 'data:image/svg+xml;charset=UTF-8,%3Csvg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 80 80"%3E%3Crect width="80" height="80" fill="%237F8C8D" rx="8"/%3E%3Ctext x="40" y="55" font-size="40" text-anchor="middle" fill="white"%3E🧱%3C/text%3E%3C/svg%3E',
+                dom: null
+            };
+            battleState.playerTeam.unshift(wall);
+        }
 
         battleState.enemyTeam = [];
         if (gameData.isFirstBattle) {
@@ -916,21 +884,23 @@ document.addEventListener('DOMContentLoaded', () => {
             gameData.isFirstBattle = false;
             gameData.saveGameData();
         } else {
-            const enemyCount = battleState.playerTeam.length;
+            // 敵は味方の数（壁を除く）と同じ数だけ生成
+            const enemyCount = gameData.equippedSlimes.length;
             
             for (let i = 0; i < enemyCount; i++) {
-                let playerChara = battleState.playerTeam[i];
-                let currentRankIndex = rarityRanks.indexOf(playerChara.rarity);
+                let playerChara = battleState.playerTeam.find(c => c.id !== 'wall_slime' && !c.checked);
+                if(playerChara) playerChara.checked = true; // 雑に重複回避
+                let currentRankIndex = playerChara ? rarityRanks.indexOf(playerChara.rarity) : 0;
                 if(currentRankIndex === -1) currentRankIndex = 0;
                 
                 let targetRankIndex = currentRankIndex;
                 let prob = getUpgradeProb(currentRankIndex, gameData.winStreak);
                 
-                if (Math.random() * 100 < prob) {
+                if (Math.random() * 100 < prob && targetRankIndex < rarityRanks.length - 1) {
                     targetRankIndex++;
                 }
                 
-                let targetRarity = rarityRanks[targetRankIndex] || rarityRanks[rarityRanks.length - 1];
+                let targetRarity = rarityRanks[targetRankIndex];
                 let possibleEnemies = characterDatabase.filter(c => c.rarity === targetRarity);
                 
                 while (possibleEnemies.length === 0 && targetRankIndex > 0) {
@@ -1026,7 +996,9 @@ document.addEventListener('DOMContentLoaded', () => {
             if (chara.currentHp <= 0) {
                 dom.classList.add('fainted');
                 stats.innerHTML = '❤️0';
+                if(chara.id === 'wall_slime') dom.style.display = 'none'; // 壁は壊れたら隠す
             } else {
+                dom.style.display = 'flex';
                 dom.classList.remove('fainted');
                 const hpDisplay = Math.round(chara.currentHp * 10) / 10;
                 stats.innerHTML = `❤️${hpDisplay} 🗡️${chara.attack}`;
@@ -1062,6 +1034,7 @@ document.addEventListener('DOMContentLoaded', () => {
             showAbilityText(deadChara.dom, "死亡時カウンター!");
             playSlashAnimation(killerChara.dom, currentBattleSpeed);
             killerChara.currentHp -= deadChara.attack * 3;
+            audioSys.playDamage();
             
             if (killerChara.currentHp <= 0 && killerChara.id === 'slime_01' && !killerChara.revived) {
                 killerChara.currentHp = killerChara.hp / 2;
@@ -1094,6 +1067,20 @@ document.addEventListener('DOMContentLoaded', () => {
         let activePlayer = battleState.playerTeam[battleState.pIndex];
         let activeEnemy = battleState.enemyTeam[battleState.eIndex];
 
+        // ハンマースライム行動時の壁再設置ロジック
+        if (activePlayer.id === 'slime_09') {
+            let wall = battleState.playerTeam.find(c => c.id === 'wall_slime');
+            if (wall && wall.currentHp <= 0) {
+                activePlayer.wallCooldown++;
+                if (activePlayer.wallCooldown >= 3) {
+                    wall.currentHp = wall.hp;
+                    activePlayer.wallCooldown = 0;
+                    showAbilityText(activePlayer.dom, "壁を再設置！");
+                    updateAllBattleUI();
+                }
+            }
+        }
+
         if (activePlayer.poisonTurns > 0) {
             activePlayer.currentHp -= 1;
             activePlayer.poisonTurns -= 1;
@@ -1120,6 +1107,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 setTimeout(startPlayerTurn, 500 / currentBattleSpeed);
                 return;
             }
+        }
+
+        // 壁はタイピング行動を行わず、すぐ次のキャラへスキップする
+        if (activePlayer.id === 'wall_slime') {
+            battleState.pIndex++;
+            startPlayerTurn();
+            return;
         }
 
         if (activePlayer.currentHp > 0 && activePlayer.stunTurns > 0) {
@@ -1158,6 +1152,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const targetChar = battleState.currentWord.en[battleState.typedIndex];
         
         if (key === targetChar) {
+            audioSys.playTyping(); // 打鍵音
             battleState.typedIndex++;
             renderTypingText();
             
@@ -1221,6 +1216,8 @@ document.addEventListener('DOMContentLoaded', () => {
             finalDamage = finalDamage * multiplier;
         }
 
+        audioSys.playAttack(); // 攻撃効果音
+
         if (isLaserAttack) {
             playLaserAnimation(attacker.dom, defender.dom, currentBattleSpeed);
         } else {
@@ -1230,6 +1227,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         setTimeout(() => {
+            audioSys.playDamage(); // ダメージ音
             defender.dom.classList.add('damage-shake');
             setTimeout(() => defender.dom.classList.remove('damage-shake'), 300 / currentBattleSpeed);
 
@@ -1242,7 +1240,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             checkDeathCounter(defender, attacker);
-
             updateAllBattleUI();
 
             setTimeout(() => {
@@ -1326,12 +1323,34 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function endBattle(isWin) {
         battleState.isActive = false;
+        audioSys.stopBGM();
         
         if (isWin) {
-            gameData.winStreak++; 
+            audioSys.playWin();
+            gameData.winStreak++;
+            
+            // --- 報酬金の計算 ---
+            let enemyCount = battleState.enemyTeam.length;
+            let raritySum = 0;
+            battleState.enemyTeam.forEach(e => {
+                raritySum += getRarityNum(e.rarity);
+            });
+            
+            let baseMoney = enemyCount * raritySum * 100;
+            
+            // マネースライムの恩恵（倍率計算）
+            let moneySlimesCount = battleState.playerTeam.filter(p => p.id === 'slime_08').length;
+            let finalMoney = baseMoney * Math.pow(2, moneySlimesCount);
+            
+            gameData.money += finalMoney;
+            
+            rewardMoneyText.textContent = `獲得賞金: ${finalMoney}円`;
+            moneyController.updateDisplay();
         } else {
+            audioSys.playLose();
             gameData.winStreak = 0; 
         }
+        
         gameData.saveGameData();
 
         setTimeout(() => {
@@ -1348,9 +1367,6 @@ document.addEventListener('DOMContentLoaded', () => {
         showScreen(screenHome);
     });
 
-    // ========================================================================
-    // 報酬獲得画面ロジック
-    // ========================================================================
     function showRewardScreen() {
         rewardGridContainer.innerHTML = "";
         
@@ -1369,6 +1385,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (enemy.rarity === 'common') card.classList.add('rarity-common');
             else if (enemy.rarity === 'uncommon') card.classList.add('rarity-uncommon');
             else if (enemy.rarity === 'rare') card.classList.add('rarity-rare');
+            else if (enemy.rarity === 'legendary') card.classList.add('rarity-legendary');
 
             const img = document.createElement('img');
             img.src = enemy.image;
@@ -1393,8 +1410,5 @@ document.addEventListener('DOMContentLoaded', () => {
         modalReward.classList.add('active');
     }
 
-    // ========================================================================
-    // ゲーム起動
-    // ========================================================================
     initGame();
 });
