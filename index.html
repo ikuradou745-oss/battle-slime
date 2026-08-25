@@ -154,17 +154,10 @@
             gap: 10px;
         }
 
-        .icon-btn {
+        .settings-icon {
             font-size: 24px;
             cursor: pointer;
             transition: transform 0.2s;
-            background: none;
-            border: none;
-            padding: 0;
-            margin: 0;
-        }
-        .icon-btn:hover {
-            transform: scale(1.2);
         }
         .settings-icon:hover {
             transform: rotate(45deg);
@@ -206,30 +199,6 @@
             margin-bottom: 30px;
             color: #FFF;
             text-shadow: -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000;
-        }
-
-        /* ショップ画面のスタイル */
-        .shop-container {
-            display: flex;
-            gap: 20px;
-            overflow-x: auto;
-            padding: 20px;
-            width: 90%;
-            justify-content: center;
-            flex-wrap: wrap;
-        }
-
-        .shop-item {
-            width: 250px;
-            background: #FFF;
-            border: 4px solid #000;
-            border-radius: 12px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 15px;
-            box-shadow: 0 6px 0 #000;
-            text-align: center;
         }
 
         /* 装備画面のスタイル */
@@ -367,8 +336,8 @@
         }
 
         /* レアリティカラー設定 */
-        .rarity-common { background-color: #BDC3C7; color: #000; } /* 灰色 */
-        .rarity-uncommon { background-color: #2ECC71; color: #000; } /* 緑色 */
+        .rarity-common { background-color: #BDC3C7; } /* 灰色 */
+        .rarity-uncommon { background-color: #2ECC71; } /* 緑色 */
         .rarity-rare { background-color: #3498DB; color: #FFF; } /* 青色 */
         .rarity-legendary { background-color: #F1C40F; color: #000; } /* 黄色 */
 
@@ -390,13 +359,14 @@
             position: relative;
         }
 
+        /* ビルの背景を追加し、スライムを中央寄りに配置 */
         .battle-field-area {
             width: 100%;
             height: 55%;
             position: relative;
             display: flex;
-            justify-content: center;
-            gap: 150px;
+            justify-content: center; /* 中央寄せ */
+            gap: 150px; /* 中央寄せのための間隔 */
             align-items: flex-end;
             padding-bottom: 20px;
             box-sizing: border-box;
@@ -406,9 +376,10 @@
                 linear-gradient(to top, #9B59B6 0%, #9B59B6 60%, transparent 60%) 30% bottom / 80px 180px no-repeat,
                 linear-gradient(to top, #2ECC71 0%, #2ECC71 35%, transparent 35%) 60% bottom / 70px 100px no-repeat,
                 linear-gradient(to top, #F1C40F 0%, #F1C40F 50%, transparent 50%) 85% bottom / 90px 150px no-repeat;
-            background-color: #87CEEB;
+            background-color: #87CEEB; /* 空色 */
         }
 
+        /* 地面を道路風に改善 */
         .battle-ground-area {
             width: 100%;
             height: 20%;
@@ -432,10 +403,11 @@
         .team-container {
             display: flex;
             gap: 15px;
-            padding: 0;
+            padding: 0; /* 中央寄せ調整のためリセット */
             align-items: flex-end;
         }
 
+        /* 敵チームは左側。画像反転はimgタグに適用 */
         #battle-enemy-team {
             justify-content: flex-start;
         }
@@ -443,12 +415,14 @@
             justify-content: flex-end;
         }
 
+        /* バトル用キャラクターアイコン（背景・枠線なし） */
         .battle-chara {
             width: 80px;
             display: flex;
             flex-direction: column;
             align-items: center;
             position: relative;
+            /* 速度変数を適用 */
             transition: transform calc(0.3s / var(--battle-speed)) ease-in-out;
         }
 
@@ -456,11 +430,13 @@
             width: 80px;
             height: 80px;
             object-fit: contain;
+            /* 背景や枠線を消す */
             background: transparent;
             border: none;
             box-shadow: none;
         }
 
+        /* 能力発動テキストのスタイル追加 */
         .ability-text {
             position: absolute;
             top: -30px;
@@ -477,6 +453,7 @@
             pointer-events: none;
             white-space: nowrap;
             z-index: 20;
+            /* 速度変数を適用 */
             transition: opacity calc(0.2s / var(--battle-speed)), transform calc(0.5s / var(--battle-speed));
         }
         .ability-text.show {
@@ -484,10 +461,12 @@
             transform: translateX(-50%) translateY(-25px);
         }
 
+        /* 敵の画像を左右反転 */
         #battle-enemy-team .battle-chara img {
             transform: scaleX(-1);
         }
 
+        /* バトル中のステータス表示 */
         .battle-stats {
             background-color: rgba(255, 255, 255, 0.9);
             border: 3px solid #000;
@@ -542,6 +521,7 @@
             transform: translateX(-150px) translateY(-20px) scale(1.1);
         }
         .damage-shake {
+            /* 速度変数を適用 */
             animation: shake calc(0.3s / var(--battle-speed));
         }
         .fainted {
@@ -580,6 +560,7 @@
             box-shadow: 0 8px 0 #000;
         }
 
+        /* キャラクター詳細テキスト */
         .detail-text-box {
             font-size: 18px;
             text-align: left;
@@ -591,18 +572,25 @@
             border-radius: 8px;
         }
 
+        /* 報酬選択用グリッド */
         .reward-grid {
             display: flex;
             gap: 15px;
             justify-content: center;
             margin-top: 15px;
         }
-        
-        /* ログインユーザータブ用 */
-        .tab-btn.active-tab {
-            box-shadow: 0 0 0 #000;
-            transform: translateY(3px);
-            opacity: 0.7;
+
+        /* ショップ用アイテム */
+        .shop-item {
+            background: #FFF;
+            border: 4px solid #000;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            width: 200px;
+        }
+        .shop-item h3 {
+            margin: 10px 0;
         }
     </style>
 </head>
@@ -622,44 +610,16 @@
     <div id="screen-home" class="screen">
         <div class="top-bar">
             <div class="money-display" id="money-display">所持金 0円</div>
-            <div class="player-info">
+            <div class="player-info" style="display: flex; align-items: center; gap: 10px;">
                 <canvas id="display-profile-canvas" width="32" height="32" style="border: 2px solid #000; border-radius: 4px; background-color: #fff;"></canvas>
                 <span id="display-player-name">プロフィール：プレイヤー</span>
-                <button class="icon-btn" id="btn-login-users" title="ログインユーザー">👥</button>
-                <button class="icon-btn settings-icon" id="btn-settings" title="設定">⚙️</button>
+                <span class="settings-icon" id="btn-settings">⚙️</span>
             </div>
         </div>
         <div class="home-menu">
             <button class="btn btn-yellow" id="btn-play">プレイ</button>
             <button class="btn btn-blue" id="btn-shop">ショップ</button>
             <button class="btn btn-green" id="btn-equip">装備</button>
-        </div>
-    </div>
-    
-    <!-- ショップ画面 -->
-    <div id="screen-shop" class="screen">
-        <div class="top-bar">
-            <button class="btn btn-red close-btn" id="btn-close-shop" style="position: static; padding: 10px 20px;">戻る</button>
-            <div class="money-display" id="shop-money-display">所持金 0円</div>
-        </div>
-        <div class="mode-title">ショップ</div>
-        <div class="shop-container">
-            <!-- マネースライム -->
-            <div class="shop-item">
-                <h3 style="margin: 5px 0;">マネースライム</h3>
-                <span class="rarity-rare" style="padding: 4px 12px; border: 2px solid #000; border-radius: 8px; font-size: 14px; font-weight: bold;">レア</span>
-                <img src="./gazou/moneyslime.png" alt="マネー" style="width: 100px; height: 100px; margin: 15px 0; object-fit: contain;">
-                <p style="font-size: 14px; height: 60px; margin: 0 0 15px 0;">装備しているだけで、試合に勝った時もらえるお金が倍になる！</p>
-                <button class="btn btn-yellow btn-small" id="btn-buy-money" style="width: 100%; font-size: 18px; padding: 10px;">15,000円で購入</button>
-            </div>
-            <!-- ハンマースライム -->
-            <div class="shop-item">
-                <h3 style="margin: 5px 0;">ハンマースライム</h3>
-                <span class="rarity-legendary" style="padding: 4px 12px; border: 2px solid #000; border-radius: 8px; font-size: 14px; font-weight: bold;">レジェンド</span>
-                <img src="./gazou/hammerslime.png" alt="ハンマー" style="width: 100px; height: 100px; margin: 15px 0; object-fit: contain;">
-                <p style="font-size: 14px; height: 60px; margin: 0 0 15px 0;">最初のターンHP8の壁を設置。壁破壊後、自身が3回行動で再設置！</p>
-                <button class="btn btn-yellow btn-small" id="btn-buy-hammer" style="width: 100%; font-size: 18px; padding: 10px;">35,000円で購入</button>
-            </div>
         </div>
     </div>
 
@@ -673,6 +633,26 @@
         </div>
     </div>
 
+    <!-- ショップ画面 -->
+    <div id="screen-shop" class="screen">
+        <button class="btn btn-red close-btn" id="btn-close-shop">ホームに戻る</button>
+        <div class="section-title" style="width: 80%; background:#FFF; padding:10px; border:4px solid #000; border-radius:8px; text-align: center; font-size: 32px;">ショップ</div>
+        <div style="display:flex; gap: 20px; justify-content: center; align-items: center; width: 80%; margin-top: 20px; flex-wrap: wrap;">
+            <div class="shop-item">
+                <img src="./gazou/moneyslime.png" style="width:100px; height:100px; object-fit:contain;" alt="マネースライム">
+                <h3>マネースライム</h3>
+                <p>15000円</p>
+                <button class="btn btn-yellow" id="btn-buy-money">購入する</button>
+            </div>
+            <div class="shop-item">
+                <img src="./gazou/hammerslime.png" style="width:100px; height:100px; object-fit:contain;" alt="ハンマースライム">
+                <h3>ハンマースライム</h3>
+                <p>35000円</p>
+                <button class="btn btn-yellow" id="btn-buy-hammer">購入する</button>
+            </div>
+        </div>
+    </div>
+
     <!-- マッチメイキング画面 -->
     <div id="screen-matchmaking" class="screen">
         <h1>相手を探しています...</h1>
@@ -680,8 +660,10 @@
 
     <!-- バトル画面 -->
     <div id="screen-battle" class="screen">
+        <!-- バトル速度変更ボタン -->
         <button id="btn-speed-toggle" class="btn btn-yellow" style="position: absolute; top: 15px; right: 15px; padding: 10px 20px; font-size: 18px; z-index: 100; box-shadow: 0 4px 0 #000;">1倍速</button>
 
+        <!-- タイピングスペース -->
         <div class="battle-top-area" id="typing-area">
             <div id="perfect-bonus-display"></div>
             <div id="typing-jp"></div>
@@ -691,11 +673,17 @@
             <div id="battle-message" style="font-size:24px; margin-top:10px; display:none;"></div>
         </div>
         
+        <!-- 戦闘フィールド -->
         <div class="battle-field-area">
-            <div class="team-container" id="battle-enemy-team"></div>
-            <div class="team-container" id="battle-player-team"></div>
+            <div class="team-container" id="battle-enemy-team">
+                <!-- 敵キャラ生成 -->
+            </div>
+            <div class="team-container" id="battle-player-team">
+                <!-- 味方キャラ生成 -->
+            </div>
         </div>
         
+        <!-- 地面 -->
         <div class="battle-ground-area"></div>
     </div>
 
@@ -710,7 +698,9 @@
                 <span>装備しているキャラ (最大4体)</span>
                 <span style="font-size: 16px; color: #555;">タップして外す</span>
             </div>
-            <div class="equipped-area" id="equipped-list"></div>
+            <div class="equipped-area" id="equipped-list">
+                <!-- スロット生成 -->
+            </div>
 
             <div class="owned-area">
                 <div class="section-title">
@@ -718,23 +708,10 @@
                     <span style="font-size: 16px; color: #555;">タップして装備 (同キャラ最大2体)</span>
                 </div>
                 <input type="text" id="search-slime" class="search-bar" placeholder="名前を検索してスライムを探す...">
-                <div class="character-grid" id="owned-list"></div>
+                <div class="character-grid" id="owned-list">
+                    <!-- キャラ一覧生成 -->
+                </div>
             </div>
-        </div>
-    </div>
-
-    <!-- ログインユーザー確認モーダル -->
-    <div id="modal-login-users" class="modal-overlay">
-        <div class="modal-content" style="width: 90%; max-width: 400px; height: 60%;">
-            <h2 style="margin-top: 0; margin-bottom: 10px;">ログイン情報</h2>
-            <div style="display: flex; gap: 10px; margin-bottom: 15px;">
-                <button class="btn btn-blue btn-small tab-btn active-tab" id="tab-current-login" style="flex:1;">現在ログイン中</button>
-                <button class="btn btn-green btn-small tab-btn" id="tab-today-login" style="flex:1;">今日ログイン</button>
-            </div>
-            <div id="login-users-list" style="flex:1; overflow-y: auto; background: #E8F8F5; border: 4px solid #000; border-radius: 8px; padding: 10px; text-align: left;">
-                <!-- JSでユーザーリストが生成されます -->
-            </div>
-            <button class="btn btn-red" id="btn-close-login-users" style="margin-top: 15px;">閉じる</button>
         </div>
     </div>
 
@@ -742,7 +719,9 @@
     <div id="modal-settings" class="modal-overlay">
         <div class="modal-content" style="min-width: 300px;">
             <h2 style="margin-top: 0;">設定</h2>
+            
             <button class="btn btn-blue" id="btn-edit-profile" style="padding: 10px 20px; font-size: 18px; width: 100%; margin-bottom: 15px;">プロフィールを変える</button>
+            
             <input type="text" id="settings-name-input" class="custom-input" placeholder="新しい名前 (3〜12文字)" maxlength="12" style="width: 90%; margin: 0 auto 15px auto;">
             <div style="display: flex; gap: 15px; justify-content: center; margin-bottom: 20px;">
                 <button class="btn btn-red" id="btn-close-settings" style="padding: 10px 20px; font-size: 18px;">閉じる</button>
@@ -783,7 +762,7 @@
         </div>
     </div>
 
-    <!-- 初期化確認：ステップ2 -->
+    <!-- 初期化確認：ステップ2 (待機) -->
     <div id="modal-reset-step2" class="modal-overlay">
         <div class="modal-content">
             <h2 style="color: #E74C3C;">最終確認準備</h2>
@@ -793,7 +772,7 @@
         </div>
     </div>
 
-    <!-- 初期化確認：ステップ3 -->
+    <!-- 初期化確認：ステップ3 (入力) -->
     <div id="modal-reset-step3" class="modal-overlay">
         <div class="modal-content">
             <h2 style="color: #E74C3C;">最終確認</h2>
@@ -806,12 +785,13 @@
         </div>
     </div>
 
-    <!-- キャラクター詳細モーダル -->
+    <!-- キャラクター詳細モーダル（装備画面用） -->
     <div id="modal-chara-detail" class="modal-overlay">
         <div class="modal-content" style="width: 80%; max-width: 400px;">
             <h2 id="detail-name" style="margin-top: 0; font-size: 28px;">名前</h2>
             <div id="detail-rarity" style="font-size: 16px; font-weight: bold; margin-top: -15px; margin-bottom: 10px;">レアリティ</div>
             <img id="detail-image" src="" alt="" style="width: 120px; height: 120px; margin: 0 auto; display: block; object-fit: contain;">
+            
             <div class="detail-text-box">
                 <div><strong>❤️ HP:</strong> <span id="detail-hp"></span></div>
                 <div style="margin-top: 5px;"><strong>⚔️ 攻撃力:</strong> <span id="detail-attack"></span></div>
@@ -824,13 +804,13 @@
         </div>
     </div>
 
-    <!-- 勝利報酬・リザルトモーダル -->
+    <!-- 勝利報酬選択モーダル -->
     <div id="modal-reward" class="modal-overlay">
         <div class="modal-content" style="width: 90%; max-width: 600px;">
-            <h2 style="color: #F1C40F; text-shadow: 1px 1px 0 #000;">勝利！</h2>
-            <h3 id="reward-money-text" style="margin: 0 0 10px 0; font-size: 24px;">獲得賞金: 0円</h3>
-            <p style="margin: 0 0 15px 0;">好きなスライムを1体選んで仲間にしよう</p>
-            <div class="reward-grid" id="reward-grid-container"></div>
+            <h2 id="reward-title">勝利！好きなスライムを1体選んでね</h2>
+            <div class="reward-grid" id="reward-grid-container">
+                <!-- 敵チームのキャラ一覧が生成されます -->
+            </div>
         </div>
     </div>
 
@@ -851,6 +831,7 @@
         </div>
     </div>
 
+    <!-- JSファイル読み込み (ファイル分割対応) -->
     <script src="sub.js"></script>
     <script src="main.js"></script>
 </body>
