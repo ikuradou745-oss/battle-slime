@@ -1558,7 +1558,7 @@ document.addEventListener('DOMContentLoaded', () => {
         let isLaserAttack = false;
         // マゼンタスライム (slime_04)
         if (attacker.id === 'slime_04' && attacker.attackCount % 3 === 0) {
-            finalDamage = 1.8;
+            finalDamage = attacker.attack * 1.5;
             defender.stunTurns = 1;
             isLaserAttack = true;
             showAbilityText(attacker.dom, "レーザー攻撃!", currentBattleSpeed);

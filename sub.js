@@ -24,8 +24,8 @@
 //
 // 1. コモン (グレー / 灰色)     - レアリティ数値: 1
 // 2. アンコモン (緑 / 緑色)     - レアリティ数値: 2
-// 3. レア (青 / 青色)           - レアリティ数値: 3 (※ライフスライムはここに配置)
-// 4. レジェンド (黄色 / 黄金)   - レアリティ数値: 4
+// 3. レア (青 / 青色)           - レアリティ数値: 3 (※水晶スライム、ライフスライム、スライムソード、スライムシールド)
+// 4. レジェンド (黄色 / 黄金)   - レアリティ数値: 4 (※フライングスライム、マネースライム、ハンマースライム、ケアスライム、ファイタースライム)
 //
 // 【メモ】対戦モードの敵スライム出現仕様
 // ・基本はプレイヤーのレアリティに応じて選出されますが、上位レアリティほど低確率になります。
@@ -94,7 +94,7 @@ const characterDatabase = [
         name: "スライム",
         rarity: "common",
         hp: 10,
-        attack: 1.0,
+        attack: 1,
         ability: "一回だけ死んでもHPを半分にして復活する",
         image: "./gazou/スライム.png"
     },
@@ -103,7 +103,7 @@ const characterDatabase = [
         name: "イエロースライム",
         rarity: "common",
         hp: 7,
-        attack: 1.0,
+        attack: 1,
         ability: "3回目の攻撃は攻撃力3倍（最大30までアップ可能）",
         image: "./gazou/イエロースライム.png"
     },
@@ -114,8 +114,8 @@ const characterDatabase = [
         name: "グリーンスライム",
         rarity: "uncommon",
         hp: 10,
-        attack: 1.2,
-        ability: "相手を3ターン毒状態にする（毎ターン1ダメージ）",
+        attack: 1,
+        ability: "相手を3ターン毒状態にする（毒状態になると毎ターン1ダメージ喰らいます。）",
         image: "./gazou/グリーンスライム.png"
     },
     {
@@ -123,8 +123,8 @@ const characterDatabase = [
         name: "マゼンタスライム",
         rarity: "uncommon",
         hp: 8,
-        attack: 1.2,
-        ability: "3回の攻撃に1回「レーザー攻撃」を行う（攻撃力1.8）。相手を1ターン気絶させる。",
+        attack: 1,
+        ability: "3回の攻撃に1回「レーザー攻撃」を行う（攻撃力1.5）。相手を1ターン気絶させる。",
         image: "./gazou/magentaslime.png"
     },
     {
@@ -132,18 +132,9 @@ const characterDatabase = [
         name: "オレンジスライム",
         rarity: "uncommon",
         hp: 12,
-        attack: 1.0,
+        attack: 0.9,
         ability: "攻撃時、相手を3ターン燃やす。燃焼で3回ダメージを受けると1ターン行動不可になる。",
         image: "./gazou/orangeslime.png"
-    },
-    {
-        id: "slime_09",
-        name: "フライングスライム",
-        rarity: "uncommon",
-        hp: 11,
-        attack: 1.3,
-        ability: "軽快な飛行で相手の攻撃を翻弄し、素早い連続攻撃を仕掛ける",
-        image: "./gazou/flyingslime.png"
     },
 
     // --- 3. レア (レアリティ数値: 3 / 青) ---
@@ -151,14 +142,14 @@ const characterDatabase = [
         id: "slime_05",
         name: "スライムソード",
         rarity: "rare",
-        hp: 12,
-        attack: 2.0,
+        hp: 10,
+        attack: 2,
         ability: "死亡時、相手を切りつけて通常攻撃力の3倍のダメージを与える。",
         image: "./gazou/slimesword.png"
     },
     {
         id: "slime_07",
-        name: "ライフスライム", // 【メモ】ライフスライムは指定により「レア」
+        name: "ライフスライム",
         rarity: "rare",
         hp: 16,
         attack: 1.5,
@@ -174,16 +165,25 @@ const characterDatabase = [
         ability: "強固な盾で身を守り、受けるダメージを常に0.5軽減する",
         image: "./gazou/slimeshield.png"
     },
-
-    // --- 4. レジェンド (レアリティ数値: 4 / 黄色) ---
     {
         id: "slime_10",
         name: "水晶スライム",
-        rarity: "legend",
+        rarity: "rare",
         hp: 20,
         attack: 2.5,
         ability: "水晶の魔力でステータスが高く、25%の確率でクリティカル大打撃を与える",
         image: "./gazou/suisyouslime.png"
+    },
+
+    // --- 4. レジェンド (レアリティ数値: 4 / 黄色) ---
+    {
+        id: "slime_09",
+        name: "フライングスライム",
+        rarity: "legend",
+        hp: 11,
+        attack: 1.3,
+        ability: "軽快な飛行で相手の攻撃を翻弄し、素早い連続攻撃を仕掛ける",
+        image: "./gazou/flyingslime.png"
     },
     {
         id: "slime_11",
