@@ -1,0 +1,8 @@
+{
+  "name": "バトルスライム",
+  "description": "タイピングでバトルするスライム育成・対戦ゲーム",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

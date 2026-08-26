@@ -4,6 +4,29 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>バトルスライム</title>
+    <!--
+    ============================================================================
+    【メモ】レアリティシステム仕様
+    ----------------------------------------------------------------------------
+    レアリティは以下の4種類のみ存在します。
+    コモンから順に強くなっていきます (コモン < アンコモン < レア < レジェンド)。
+
+    1. コモン (グレー / 灰色)     - レアリティ数値: 1
+    2. アンコモン (緑 / 緑色)     - レアリティ数値: 2
+    3. レア (青 / 青色)           - レアリティ数値: 3 (※ライフスライムはここに配置)
+    4. レジェンド (黄色 / 黄金)   - レアリティ数値: 4
+
+    【メモ】勝利時のお金獲得計算式
+    試合が終わって勝ったら:
+    獲得金額(円) = (自分のスライムの数) * (相手のスライムのレアリティを数字で表した時の合計) * 100
+
+    【メモ】レベルアップシステム仕様
+    ・初期レベル: 1 (最大レベル: 50)
+    ・レベルアップ費用: 現在のレベル * 1000 円 (例: Lv1->2は1000円, Lv2->3は2000円, ..., Lv49->50は49000円)
+    ・ステータス上昇: レベル1上がるごとにHP・攻撃力が+5%上昇 (基本値 * (1 + (Lv - 1) * 0.05))
+    ・敵チームのレベル配分: 味方スライムのレベル合計 / 味方スライムの数 で均等に配分
+    ============================================================================
+    -->
     <style>
         /* CSS変数の追加（バトル速度制御用） */
         :root {
@@ -141,6 +164,7 @@
             padding: 5px 15px;
             font-size: 20px;
             box-shadow: 0 4px 0 #000;
+            font-weight: 900;
         }
 
         .player-info {
@@ -284,42 +308,111 @@
             cursor: pointer;
             box-sizing: border-box;
             position: relative;
+            transition: transform 0.1s;
+        }
+        .chara-card:hover {
+            transform: translateY(-2px);
         }
         
         .chara-card img {
-            width: 60px;
-            height: 60px;
+            width: 55px;
+            height: 55px;
             object-fit: contain;
-            margin-top: 5px;
+            margin-top: 15px;
         }
 
         .chara-card .chara-name {
-            font-size: 13px;
+            font-size: 12px;
             text-align: center;
             word-break: break-all;
-            background: rgba(255, 255, 255, 0.9);
+            background: rgba(255, 255, 255, 0.95);
             border-radius: 4px;
             padding: 2px 4px;
             width: 100%;
             box-sizing: border-box;
             border: 2px solid #000;
-        }
-        
-        .chara-card .equip-status {
-            position: absolute;
-            top: -10px;
-            right: -10px;
-            background-color: #E74C3C;
-            color: #FFF;
-            border: 2px solid #000;
-            border-radius: 12px;
-            padding: 2px 8px;
-            font-size: 12px;
             font-weight: bold;
-            display: none;
         }
-        .chara-card.is-equipped .equip-status {
-            display: block;
+
+        .rarity-badge {
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            font-size: 10px;
+            padding: 1px 4px;
+            border-radius: 4px;
+            border: 1px solid #000;
+            background: rgba(255, 255, 255, 0.9);
+            color: #000;
+            font-weight: 900;
+        }
+
+        .level-badge {
+            position: absolute;
+            top: 3px;
+            right: 3px;
+            font-size: 10px;
+            padding: 1px 4px;
+            border-radius: 4px;
+            border: 1px solid #000;
+            background: #FFF;
+            color: #000;
+            font-weight: 900;
+        }
+
+        /* 装備 / 詳細(LVUP) モード切り替えバー */
+        .equip-mode-bar {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 12px;
+            margin: 10px 0 20px 0;
+            background: #EAECEE;
+            padding: 8px;
+            border: 3px solid #000;
+            border-radius: 12px;
+        }
+
+        .equip-mode-btn {
+            flex: 1;
+            max-width: 250px;
+            padding: 10px 16px;
+            font-size: 17px;
+            font-weight: 900;
+            border: 3px solid #000;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            box-shadow: 0 4px 0 #000;
+            color: #333;
+            background: #BDC3C7;
+        }
+
+        .equip-mode-btn:active {
+            transform: translateY(3px);
+            box-shadow: 0 1px 0 #000;
+        }
+
+        .equip-mode-btn.active-equip {
+            background: #2ECC71;
+            color: #000;
+            box-shadow: 0 4px 0 #1E8449;
+        }
+
+        .equip-mode-btn.active-detail {
+            background: #F1C40F;
+            color: #000;
+            box-shadow: 0 4px 0 #B7950B;
+        }
+
+        /* 詳細モード中のカードスタイル強調 */
+        .detail-mode-active .chara-card {
+            cursor: pointer;
+            box-shadow: 0 4px 0 #B7950B;
+            border-color: #D68910;
+        }
+        .detail-mode-active .chara-card:hover {
+            transform: translateY(-4px) scale(1.03);
         }
 
         .chara-slot {
@@ -335,10 +428,19 @@
             color: #333;
         }
 
-        /* レアリティカラー設定 */
-        .rarity-common { background-color: #BDC3C7; } /* 灰色 */
-        .rarity-uncommon { background-color: #2ECC71; } /* 緑色 */
-        .rarity-rare { background-color: #3498DB; color: #FFF; } /* 青色 */
+        /* 
+        ============================================================================
+        【4段階レアリティカラー設定】
+        1. コモン: 灰色 (#BDC3C7)
+        2. アンコモン: 緑色 (#2ECC71)
+        3. レア: 青色 (#3498DB)
+        4. レジェンド: 黄色 (#F1C40F)
+        ============================================================================
+        */
+        .rarity-common { background-color: #BDC3C7; color: #000; } /* コモン (灰色) */
+        .rarity-uncommon { background-color: #2ECC71; color: #000; } /* アンコモン (緑色) */
+        .rarity-rare { background-color: #3498DB; color: #FFF; } /* レア (青色) */
+        .rarity-legend { background-color: #F1C40F; color: #000; } /* レジェンド (黄色) */
 
         /* バトル画面のスタイル */
         #screen-battle {
@@ -364,8 +466,8 @@
             height: 55%;
             position: relative;
             display: flex;
-            justify-content: center; /* 変更: 中央寄せ */
-            gap: 150px; /* 変更: 中央寄せのための間隔 */
+            justify-content: center;
+            gap: 150px;
             align-items: flex-end;
             padding-bottom: 20px;
             box-sizing: border-box;
@@ -375,10 +477,9 @@
                 linear-gradient(to top, #9B59B6 0%, #9B59B6 60%, transparent 60%) 30% bottom / 80px 180px no-repeat,
                 linear-gradient(to top, #2ECC71 0%, #2ECC71 35%, transparent 35%) 60% bottom / 70px 100px no-repeat,
                 linear-gradient(to top, #F1C40F 0%, #F1C40F 50%, transparent 50%) 85% bottom / 90px 150px no-repeat;
-            background-color: #87CEEB; /* 空色 */
+            background-color: #87CEEB;
         }
 
-        /* 地面を道路風に改善 */
         .battle-ground-area {
             width: 100%;
             height: 20%;
@@ -402,11 +503,10 @@
         .team-container {
             display: flex;
             gap: 15px;
-            padding: 0; /* 中央寄せ調整のためリセット */
+            padding: 0;
             align-items: flex-end;
         }
 
-        /* 敵チームは左側。画像反転はimgタグに適用 */
         #battle-enemy-team {
             justify-content: flex-start;
         }
@@ -414,14 +514,12 @@
             justify-content: flex-end;
         }
 
-        /* バトル用キャラクターアイコン（背景・枠線なし） */
         .battle-chara {
             width: 80px;
             display: flex;
             flex-direction: column;
             align-items: center;
             position: relative;
-            /* 速度変数を適用 */
             transition: transform calc(0.3s / var(--battle-speed)) ease-in-out;
         }
 
@@ -429,13 +527,11 @@
             width: 80px;
             height: 80px;
             object-fit: contain;
-            /* 背景や枠線を消す */
             background: transparent;
             border: none;
             box-shadow: none;
         }
 
-        /* 能力発動テキストのスタイル追加 */
         .ability-text {
             position: absolute;
             top: -30px;
@@ -452,7 +548,6 @@
             pointer-events: none;
             white-space: nowrap;
             z-index: 20;
-            /* 速度変数を適用 */
             transition: opacity calc(0.2s / var(--battle-speed)), transform calc(0.5s / var(--battle-speed));
         }
         .ability-text.show {
@@ -460,12 +555,10 @@
             transform: translateX(-50%) translateY(-25px);
         }
 
-        /* 敵の画像を左右反転 */
         #battle-enemy-team .battle-chara img {
             transform: scaleX(-1);
         }
 
-        /* バトル中のステータス表示 */
         .battle-stats {
             background-color: rgba(255, 255, 255, 0.9);
             border: 3px solid #000;
@@ -490,7 +583,6 @@
             white-space: nowrap;
         }
 
-        /* タイピングエリア UI */
         #typing-jp {
             font-size: 32px;
             margin-bottom: 10px;
@@ -512,7 +604,6 @@
             height: 24px;
         }
 
-        /* アニメーション用クラス */
         .attack-move-right {
             transform: translateX(150px) translateY(-20px) scale(1.1);
         }
@@ -520,7 +611,6 @@
             transform: translateX(-150px) translateY(-20px) scale(1.1);
         }
         .damage-shake {
-            /* 速度変数を適用 */
             animation: shake calc(0.3s / var(--battle-speed));
         }
         .fainted {
@@ -559,7 +649,6 @@
             box-shadow: 0 8px 0 #000;
         }
 
-        /* キャラクター詳細テキスト */
         .detail-text-box {
             font-size: 18px;
             text-align: left;
@@ -571,12 +660,20 @@
             border-radius: 8px;
         }
 
-        /* 報酬選択用グリッド */
         .reward-grid {
             display: flex;
             gap: 15px;
             justify-content: center;
             margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        .reward-money-box {
+            background-color: #FEF9E7;
+            border: 3px solid #F1C40F;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 10px;
         }
     </style>
 </head>
@@ -616,6 +713,7 @@
         <div class="play-mode-container">
             <button class="btn btn-purple mode-btn" id="btn-versus-mode">対戦モード</button>
             <button class="btn btn-blue mode-btn" id="btn-story-mode">ストーリーモード</button>
+            <button class="btn btn-yellow mode-btn" id="btn-open-rules" style="margin-top: 15px; font-size: 20px;">📖 ゲーム・対戦ルール</button>
         </div>
     </div>
 
@@ -658,11 +756,17 @@
         <div class="equip-container">
             <button class="btn btn-red close-btn" id="btn-close-equip">戻る</button>
             
-            <a name="Chara" id="Chara"></a> <!-- Chara Anchor Tool -->
+            <a name="Chara" id="Chara"></a>
+
+            <!-- モード切り替えバー (装備 / 詳細(LVUP)) -->
+            <div class="equip-mode-bar">
+                <button id="btn-mode-equip" class="equip-mode-btn active-equip">🛡️ 装備モード</button>
+                <button id="btn-mode-detail" class="equip-mode-btn">🔍 詳細(LVUP)モード</button>
+            </div>
             
             <div class="section-title">
                 <span>装備しているキャラ (最大4体)</span>
-                <span style="font-size: 16px; color: #555;">タップして外す</span>
+                <span id="equip-hint-text" style="font-size: 16px; color: #555;">タップして外す</span>
             </div>
             <div class="equipped-area" id="equipped-list">
                 <!-- スロット生成 -->
@@ -671,7 +775,7 @@
             <div class="owned-area">
                 <div class="section-title">
                     <span>持っているスライム</span>
-                    <span style="font-size: 16px; color: #555;">タップして装備 (同キャラ最大2体)</span>
+                    <span id="owned-hint-text" style="font-size: 16px; color: #555;">タップして装備 (同キャラ最大2体)</span>
                 </div>
                 <input type="text" id="search-slime" class="search-bar" placeholder="名前を検索してスライムを探す...">
                 <div class="character-grid" id="owned-list">
@@ -686,6 +790,7 @@
         <div class="modal-content" style="min-width: 300px;">
             <h2 style="margin-top: 0;">設定</h2>
             
+            <button class="btn btn-yellow" id="btn-settings-rules" style="padding: 10px 20px; font-size: 18px; width: 100%; margin-bottom: 15px;">📖 ゲーム・対戦ルール</button>
             <button class="btn btn-blue" id="btn-edit-profile" style="padding: 10px 20px; font-size: 18px; width: 100%; margin-bottom: 15px;">プロフィールを変える</button>
             
             <input type="text" id="settings-name-input" class="custom-input" placeholder="新しい名前 (3〜12文字)" maxlength="12" style="width: 90%; margin: 0 auto 15px auto;">
@@ -696,6 +801,44 @@
             <div style="border-top: 4px dashed #000; padding-top: 20px;">
                 <button class="btn btn-red" id="btn-init-start" style="padding: 10px 20px; font-size: 18px; width: 100%;">初期化 (データ削除)</button>
             </div>
+        </div>
+    </div>
+
+    <!-- ルール説明モーダル -->
+    <div id="modal-rules" class="modal-overlay">
+        <div class="modal-content" style="width: 90%; max-width: 500px; max-height: 85vh; overflow-y: auto; text-align: left;">
+            <h2 style="text-align: center; margin-top: 0; color: #2C3E50;">📖 ゲームルール説明</h2>
+            
+            <div style="background: #FEF9E7; border: 3px solid #F1C40F; border-radius: 8px; padding: 12px; margin-bottom: 12px;">
+                <h4 style="margin: 0 0 6px 0; color: #D35400; font-size: 18px;">👑 対戦での敵スライム出現ルール</h4>
+                <p style="margin: 0; font-size: 14px; line-height: 1.6;">
+                    対戦モードでは、上位のレアリティほど出現確率が低くなります。<br>
+                    また、<strong>「各レアリティのスライムを3体以上所持」</strong>すると、次のレアリティの敵が出現するようになります！
+                </p>
+                <ul style="margin: 6px 0 0 0; padding-left: 20px; font-size: 13px; line-height: 1.6;">
+                    <li><strong>コモンを3体以上所持</strong> ➔ <span style="color:#2ECC71; font-weight:bold;">アンコモン</span> の敵が低確率で出現！</li>
+                    <li><strong>アンコモンを3体以上所持</strong> ➔ <span style="color:#3498DB; font-weight:bold;">レア</span> の敵が低確率で出現！</li>
+                    <li><strong>レアを3体以上所持</strong> ➔ <span style="color:#F39C12; font-weight:bold;">レジェンド</span> の敵が低確率で出現！</li>
+                </ul>
+            </div>
+
+            <div style="background: #E8F8F5; border: 3px solid #2ECC71; border-radius: 8px; padding: 12px; margin-bottom: 12px;">
+                <h4 style="margin: 0 0 6px 0; color: #27AE60; font-size: 18px;">💰 勝利賞金の計算式</h4>
+                <p style="margin: 0; font-size: 14px; line-height: 1.6;">
+                    <strong>獲得賞金(円) ＝ (味方スライム数) × (相手スライムのレアリティ数値合計) × 100</strong><br>
+                    <span style="font-size:12px; color:#555;">※レアリティ数値: コモン=1, アンコモン=2, レア=3, レジェンド=4</span>
+                </p>
+            </div>
+
+            <div style="background: #EBF5FB; border: 3px solid #3498DB; border-radius: 8px; padding: 12px; margin-bottom: 15px;">
+                <h4 style="margin: 0 0 6px 0; color: #2980B9; font-size: 18px;">🆙 レベルアップ & 育成</h4>
+                <p style="margin: 0; font-size: 14px; line-height: 1.6;">
+                    装備画面でスライムをタップすると、賞金を使ってレベルアップ可能（最大Lv.50）。<br>
+                    レベル1上昇ごとに <strong>HP・攻撃力が+5%強化</strong> されます！
+                </p>
+            </div>
+
+            <button class="btn btn-blue" id="btn-close-rules" style="width: 100%; font-size: 18px; padding: 10px;">閉じる</button>
         </div>
     </div>
 
@@ -753,9 +896,10 @@
 
     <!-- キャラクター詳細モーダル（装備画面用） -->
     <div id="modal-chara-detail" class="modal-overlay">
-        <div class="modal-content" style="width: 80%; max-width: 400px;">
+        <div class="modal-content" style="width: 85%; max-width: 420px;">
             <h2 id="detail-name" style="margin-top: 0; font-size: 28px;">名前</h2>
-            <div id="detail-rarity" style="font-size: 16px; font-weight: bold; margin-top: -15px; margin-bottom: 10px;">レアリティ</div>
+            <div id="detail-rarity" style="font-size: 16px; font-weight: bold; margin-top: -10px; margin-bottom: 5px;">レアリティ</div>
+            <div id="detail-level" style="font-size: 18px; font-weight: 900; color: #2C3E50; margin-bottom: 10px;">Lv. 1 / 50</div>
             <img id="detail-image" src="" alt="" style="width: 120px; height: 120px; margin: 0 auto; display: block; object-fit: contain;">
             
             <div class="detail-text-box">
@@ -766,6 +910,13 @@
                     <span id="detail-ability" style="display: inline-block; margin-top: 5px;"></span>
                 </div>
             </div>
+
+            <!-- レベルアップ操作エリア -->
+            <div id="detail-levelup-area" style="background: #FEF9E7; border: 3px solid #F1C40F; border-radius: 8px; padding: 12px; margin-bottom: 10px;">
+                <div id="levelup-cost-text" style="font-size: 15px; font-weight: bold; color: #D35400; margin-bottom: 8px;">必要費用: 1,000円</div>
+                <button class="btn btn-yellow" id="btn-levelup-slime" style="padding: 10px 20px; font-size: 18px; width: 100%;">レベルアップ (+5%UP)</button>
+            </div>
+
             <button class="btn btn-red" id="btn-close-detail">閉じる</button>
         </div>
     </div>
@@ -773,7 +924,12 @@
     <!-- 勝利報酬選択モーダル -->
     <div id="modal-reward" class="modal-overlay">
         <div class="modal-content" style="width: 90%; max-width: 600px;">
-            <h2>勝利！好きなスライムを1体選んでね</h2>
+            <h2 style="color: #27AE60; margin: 0;">🎉 勝利！</h2>
+            <div class="reward-money-box">
+                <div id="reward-money-banner" style="font-size: 22px; color: #D35400;">獲得賞金: +0円</div>
+                <div id="reward-money-detail" style="font-size: 14px; color: #7F8C8D; margin-top: 4px;"></div>
+            </div>
+            <h3 style="margin: 5px 0;">好きなスライムを1体選んで仲間にしよう！</h3>
             <div class="reward-grid" id="reward-grid-container">
                 <!-- 敵チームのキャラ一覧が生成されます -->
             </div>
@@ -797,7 +953,7 @@
         </div>
     </div>
 
-    <!-- JSファイル読み込み (ファイル分割対応) -->
+    <!-- JSファイル読み込み (sub.js -> main.js) -->
     <script src="sub.js"></script>
     <script src="main.js"></script>
 </body>
