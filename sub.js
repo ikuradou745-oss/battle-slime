@@ -151,8 +151,8 @@ const characterDatabase = [
         id: "slime_07",
         name: "ライフスライム",
         rarity: "rare",
-        hp: 16,
-        attack: 1.5,
+        hp: 15,
+        attack: 0.9,
         ability: "生命力に満ちており、毎ターン開始時に自身のHPを1回復する",
         image: "./gazou/lifeslime.png"
     },
@@ -169,8 +169,8 @@ const characterDatabase = [
         id: "slime_10",
         name: "水晶スライム",
         rarity: "rare",
-        hp: 20,
-        attack: 2.5,
+        hp: 12,
+        attack: 1.2,
         ability: "水晶の魔力でステータスが高く、25%の確率でクリティカル大打撃を与える",
         image: "./gazou/suisyouslime.png"
     },
@@ -180,8 +180,8 @@ const characterDatabase = [
         id: "slime_09",
         name: "フライングスライム",
         rarity: "legend",
-        hp: 11,
-        attack: 1.3,
+        hp: 15,
+        attack: 1.5,
         ability: "軽快な飛行で相手の攻撃を翻弄し、素早い連続攻撃を仕掛ける",
         image: "./gazou/flyingslime.png"
     },
