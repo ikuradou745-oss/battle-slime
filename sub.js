@@ -96,7 +96,7 @@ const characterDatabase = [
         hp: 10,
         attack: 1,
         ability: "一回だけ死んでもHPを半分にして復活する",
-        image: "./gazou/スライム.png"
+        image: "./gazou/slime.png"
     },
     {
         id: "slime_02",
