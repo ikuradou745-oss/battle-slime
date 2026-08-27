@@ -1950,41 +1950,58 @@ document.addEventListener('DOMContentLoaded', () => {
             finalDamage = finalDamage * multiplier;
         }
 
-        // --- 防御側のダメージ軽減判定 ---
-        // 1. ファイタースライム (slime_14) の底力 (HP8割以下で受けるダメージ50%カット)
-        if (defender.id === 'slime_14' && defender.currentHp <= (defender.hp * 0.8)) {
-            finalDamage *= 0.5;
-            showAbilityText(defender.dom, "🥋闘志ガード-50%", currentBattleSpeed);
-        }
-
-        // 2. ケアスライムのバリア (25%ダメージカット)
-        if (defender.barrierTurns > 0) {
-            finalDamage *= (1 - (defender.barrierReduction || 0.25));
-            showAbilityText(defender.dom, "🛡️バリア-25%", currentBattleSpeed);
-        }
-
-        // 3. スライムシールド (slime_08) の防御軽減 (常に0.5軽減)
-        if (defender.id === 'slime_08') {
-            finalDamage = Math.max(0.2, finalDamage - 0.5);
-            showAbilityText(defender.dom, "シールドガード!", currentBattleSpeed);
-        }
-
-        // --- ハンマースライム (slime_12) の壁身代わり判定 ---
-        if (defender.wallHp > 0) {
-            if (defender.wallHp >= finalDamage) {
-                defender.wallHp -= finalDamage;
+        // --- フライングスライム (slime_09) 3ターンに1回攻撃・能力をかわす ---
+        let isDodged = false;
+        if (defender.id === 'slime_09') {
+            defender.dodgeCount = (defender.dodgeCount || 0) + 1;
+            if (defender.dodgeCount % 3 === 0) {
+                isDodged = true;
                 finalDamage = 0;
-                showAbilityText(defender.dom, `🧱壁が防御! (残HP:${Math.round(defender.wallHp * 10) / 10})`, currentBattleSpeed);
-                if (typeof playWallAnimation === 'function') {
-                    playWallAnimation(defender.dom, "🧱ガード!", currentBattleSpeed);
-                }
-            } else {
-                finalDamage -= defender.wallHp;
-                defender.wallHp = 0;
-                defender.wallCooldown = 3;
-                showAbilityText(defender.dom, "💥壁が破壊された! (3T後復活)", currentBattleSpeed);
-                if (typeof playWallAnimation === 'function') {
-                    playWallAnimation(defender.dom, "💥壁破壊!", currentBattleSpeed);
+                // 付与された状態異常も無効化
+                defender.stunTurns = 0;
+                defender.poisonTurns = 0;
+                defender.burnTurns = 0;
+                showAbilityText(defender.dom, "🕊️能力をかわした!", currentBattleSpeed);
+            }
+        }
+
+        // --- 防御側のダメージ軽減判定 ---
+        if (!isDodged) {
+            // 1. ファイタースライム (slime_14) の底力 (HP8割以下で受けるダメージ50%カット)
+            if (defender.id === 'slime_14' && defender.currentHp <= (defender.hp * 0.8)) {
+                finalDamage *= 0.5;
+                showAbilityText(defender.dom, "🥋闘志ガード-50%", currentBattleSpeed);
+            }
+
+            // 2. ケアスライムのバリア (25%ダメージカット)
+            if (defender.barrierTurns > 0) {
+                finalDamage *= (1 - (defender.barrierReduction || 0.25));
+                showAbilityText(defender.dom, "🛡️バリア-25%", currentBattleSpeed);
+            }
+
+            // 3. スライムシールド (slime_08) の防御軽減 (常に0.5軽減)
+            if (defender.id === 'slime_08') {
+                finalDamage = Math.max(0.2, finalDamage - 0.5);
+                showAbilityText(defender.dom, "シールドガード!", currentBattleSpeed);
+            }
+
+            // --- ハンマースライム (slime_12) の壁身代わり判定 ---
+            if (defender.wallHp > 0) {
+                if (defender.wallHp >= finalDamage) {
+                    defender.wallHp -= finalDamage;
+                    finalDamage = 0;
+                    showAbilityText(defender.dom, `🧱壁が防御! (残HP:${Math.round(defender.wallHp * 10) / 10})`, currentBattleSpeed);
+                    if (typeof playWallAnimation === 'function') {
+                        playWallAnimation(defender.dom, "🧱ガード!", currentBattleSpeed);
+                    }
+                } else {
+                    finalDamage -= defender.wallHp;
+                    defender.wallHp = 0;
+                    defender.wallCooldown = 3;
+                    showAbilityText(defender.dom, "💥壁が破壊された! (3T後復活)", currentBattleSpeed);
+                    if (typeof playWallAnimation === 'function') {
+                        playWallAnimation(defender.dom, "💥壁破壊!", currentBattleSpeed);
+                    }
                 }
             }
         }

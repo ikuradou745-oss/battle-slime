@@ -182,7 +182,7 @@ const characterDatabase = [
         rarity: "legend",
         hp: 15,
         attack: 1.5,
-        ability: "軽快な飛行で相手の攻撃を翻弄し、素早い連続攻撃を仕掛ける",
+        ability: "軽快な飛行で翻弄し、3ターンに1回相手の攻撃・能力を完全にかわす。",
         image: "./gazou/flyingslime.png"
     },
     {
