@@ -98,6 +98,14 @@ class GameDataManager {
         // プロフィールの読み込み (14x14=196配列)
         const savedProfile = localStorage.getItem('playerProfile');
         this.playerProfile = savedProfile ? JSON.parse(savedProfile) : Array(196).fill('transparent');
+
+        // スマホ操作モード設定 (初期値: false / 無し)
+        const savedMobileMode = localStorage.getItem('isMobileMode');
+        this.isMobileMode = savedMobileMode === 'true';
+
+        // ストーリーモードクリア状況 (クリア済みステージ番号配列 [1, 2, ...])
+        const savedStoryCleared = localStorage.getItem('storyClearedStages');
+        this.storyClearedStages = savedStoryCleared ? JSON.parse(savedStoryCleared) : [];
     }
 
     getSlimeLevel(slimeId) {
@@ -135,6 +143,23 @@ class GameDataManager {
         this.saveGameData();
     }
 
+    saveMobileMode(enabled) {
+        this.isMobileMode = !!enabled;
+        localStorage.setItem('isMobileMode', this.isMobileMode ? 'true' : 'false');
+    }
+
+    saveStoryClear(stageNum) {
+        if (!this.storyClearedStages.includes(stageNum)) {
+            this.storyClearedStages.push(stageNum);
+            this.storyClearedStages.sort((a, b) => a - b);
+            localStorage.setItem('storyClearedStages', JSON.stringify(this.storyClearedStages));
+        }
+    }
+
+    isStageCleared(stageNum) {
+        return this.storyClearedStages.includes(stageNum);
+    }
+
     saveGameData() {
         localStorage.setItem('playerMoney', this.money.toString());
         localStorage.setItem('ownedSlimes', JSON.stringify(this.ownedSlimes));
@@ -143,6 +168,8 @@ class GameDataManager {
         localStorage.setItem('isFirstBattle', this.isFirstBattle);
         localStorage.setItem('winStreak', this.winStreak.toString());
         localStorage.setItem('playerProfile', JSON.stringify(this.playerProfile));
+        localStorage.setItem('isMobileMode', this.isMobileMode ? 'true' : 'false');
+        localStorage.setItem('storyClearedStages', JSON.stringify(this.storyClearedStages));
     }
 
     getPlayerName() {
@@ -199,6 +226,28 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnClosePlay = document.getElementById('btn-close-play');
     const btnVersusMode = document.getElementById('btn-versus-mode');
     const btnStoryMode = document.getElementById('btn-story-mode');
+
+    // ストーリーモード画面
+    const screenStoryChapters = document.getElementById('screen-story-chapters');
+    const btnCloseStoryChapters = document.getElementById('btn-close-story-chapters');
+    const btnChapter1 = document.getElementById('btn-chapter-1');
+    const btnChapter2 = document.getElementById('btn-chapter-2');
+    const btnChapter3 = document.getElementById('btn-chapter-3');
+    const btnChapter4 = document.getElementById('btn-chapter-4');
+
+    const screenStoryStages = document.getElementById('screen-story-stages');
+    const btnCloseStoryStages = document.getElementById('btn-close-story-stages');
+    const storyStageList = document.getElementById('story-stage-list');
+    const storyProgressText = document.getElementById('story-progress-text');
+
+    // スマホ操作モード用UI
+    const btnMobileOff = document.getElementById('btn-mobile-off');
+    const btnMobileOn = document.getElementById('btn-mobile-on');
+    const mobileKeyboardContainer = document.getElementById('mobile-keyboard-container');
+
+    // 現在のバトルモード管理 ('versus' | 'story')
+    let currentBattleMode = 'versus';
+    let currentStoryStage = null;
 
     // 装備画面
     const searchSlimeInput = document.getElementById('search-slime');
@@ -298,8 +347,43 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // スマホ操作モード (キーボード表示) のUI反映
+    function updateMobileModeUI() {
+        const isMobile = !!gameData.isMobileMode;
+        document.body.classList.toggle('mobile-mode-on', isMobile);
+
+        if (btnMobileOff && btnMobileOn) {
+            if (isMobile) {
+                btnMobileOn.style.background = '#2ECC71';
+                btnMobileOn.style.color = '#000';
+                btnMobileOff.style.background = '#BDC3C7';
+                btnMobileOff.style.color = '#555';
+            } else {
+                btnMobileOff.style.background = '#2ECC71';
+                btnMobileOff.style.color = '#000';
+                btnMobileOn.style.background = '#BDC3C7';
+                btnMobileOn.style.color = '#555';
+            }
+        }
+    }
+
+    if (btnMobileOff) {
+        btnMobileOff.addEventListener('click', () => {
+            gameData.saveMobileMode(false);
+            updateMobileModeUI();
+        });
+    }
+
+    if (btnMobileOn) {
+        btnMobileOn.addEventListener('click', () => {
+            gameData.saveMobileMode(true);
+            updateMobileModeUI();
+        });
+    }
+
     function initGame() {
         moneyController.updateDisplay(gameData.money);
+        updateMobileModeUI();
         
         if (gameData.getPlayerName()) {
             updateProfileUI();
@@ -709,6 +793,8 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     btnVersusMode.addEventListener('click', () => {
+        currentBattleMode = 'versus';
+        currentStoryStage = null;
         screenMatchmaking.style.opacity = '0';
         showScreen(screenMatchmaking);
         
@@ -727,9 +813,150 @@ document.addEventListener('DOMContentLoaded', () => {
         }, waitTime + 500);
     });
 
+    // ストーリーモード画面遷移
     btnStoryMode.addEventListener('click', () => {
-        showMessage('ストーリーモードは<br>開発中です！');
+        showScreen(screenStoryChapters);
     });
+
+    if (btnCloseStoryChapters) {
+        btnCloseStoryChapters.addEventListener('click', () => {
+            showScreen(screenPlay);
+        });
+    }
+
+    if (btnChapter1) {
+        btnChapter1.addEventListener('click', () => {
+            renderStoryStages();
+            showScreen(screenStoryStages);
+        });
+    }
+
+    if (btnChapter2) {
+        btnChapter2.addEventListener('click', () => {
+            showMessage('第2章は準備中です！<br>今後のアップデートをお待ちください。');
+        });
+    }
+
+    if (btnChapter3) {
+        btnChapter3.addEventListener('click', () => {
+            showMessage('第3章は準備中です！<br>今後のアップデートをお待ちください。');
+        });
+    }
+
+    if (btnChapter4) {
+        btnChapter4.addEventListener('click', () => {
+            showMessage('第4章は準備中です！<br>今後のアップデートをお待ちください。');
+        });
+    }
+
+    if (btnCloseStoryStages) {
+        btnCloseStoryStages.addEventListener('click', () => {
+            showScreen(screenStoryChapters);
+        });
+    }
+
+    // ストーリー第1章ステージ一覧の描画
+    function renderStoryStages() {
+        if (!storyStageList) return;
+        storyStageList.innerHTML = "";
+
+        const clearedCount = gameData.storyClearedStages.length;
+        if (storyProgressText) {
+            storyProgressText.textContent = `クリア: ${clearedCount} / 10`;
+        }
+
+        const stages = (typeof storyStageData !== 'undefined') ? storyStageData : [];
+
+        stages.forEach((stage, idx) => {
+            const isCleared = gameData.isStageCleared(stage.stage);
+            // 直前のステージがクリア済みなら解放 (ステージ1は常に解放)
+            const isUnlocked = stage.stage === 1 || gameData.isStageCleared(stage.stage - 1);
+            
+            const card = document.createElement('div');
+            card.className = 'stage-card';
+
+            if (isCleared) {
+                card.classList.add('cleared');
+            } else if (!isUnlocked) {
+                card.classList.add('locked');
+            }
+
+            let enemiesHtml = "";
+            stage.enemies.forEach(enemyId => {
+                let enemyName = "";
+                let enemyImg = "";
+                if (typeof storyBossDatabase !== 'undefined' && storyBossDatabase[enemyId]) {
+                    enemyName = storyBossDatabase[enemyId].name;
+                    enemyImg = storyBossDatabase[enemyId].image;
+                } else {
+                    const c = characterDatabase.find(item => item.id === enemyId);
+                    if (c) {
+                        enemyName = c.name;
+                        enemyImg = c.image;
+                    }
+                }
+                if (enemyName) {
+                    enemiesHtml += `
+                        <div style="display: flex; align-items: center; gap: 4px; background: rgba(0,0,0,0.04); padding: 2px 6px; border-radius: 4px;">
+                            <img src="${enemyImg}" style="width: 22px; height: 22px; object-fit: contain;">
+                            <span style="font-size: 11px;">${enemyName}</span>
+                        </div>
+                    `;
+                }
+            });
+
+            let rewardHtml = `💰 ${stage.rewardMoney.toLocaleString()}円`;
+            if (stage.rewardSlime) {
+                const rSlime = characterDatabase.find(c => c.id === stage.rewardSlime);
+                if (rSlime) {
+                    rewardHtml += ` + 👑 <strong>【${rSlime.name}】</strong>仲間入り`;
+                }
+            }
+
+            let buttonHtml = "";
+            if (isCleared) {
+                buttonHtml = `<button class="btn btn-gray btn-small" disabled style="width: 100%; cursor: not-allowed;">クリア済み (再挑戦不可)</button>`;
+            } else if (isUnlocked) {
+                buttonHtml = `<button class="btn btn-yellow btn-small btn-challenge-stage" data-stage="${stage.stage}" style="width: 100%;">挑戦する</button>`;
+            } else {
+                buttonHtml = `<button class="btn btn-gray btn-small" disabled style="width: 100%; cursor: not-allowed;">🔒 未解放</button>`;
+            }
+
+            const isBossStage = stage.stage === 7 || stage.stage === 10 || stage.isBoss;
+
+            card.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                    <div style="font-weight: 900; font-size: 16px; color: ${isBossStage ? '#8E44AD' : '#2C3E50'};">
+                        ${isBossStage ? '👑 ' : ''}${stage.title}: ${stage.name || ''}
+                    </div>
+                    ${isCleared ? '<span style="color: #27AE60; font-weight: bold; font-size: 13px;">✅ CLEAR</span>' : ''}
+                </div>
+                <div style="display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 6px 0;">
+                    ${enemiesHtml}
+                </div>
+                <div style="font-size: 12px; color: #D35400; font-weight: bold; margin-bottom: 8px;">
+                    報酬: ${rewardHtml}
+                </div>
+                <div>${buttonHtml}</div>
+            `;
+
+            const challengeBtn = card.querySelector('.btn-challenge-stage');
+            if (challengeBtn) {
+                challengeBtn.addEventListener('click', () => {
+                    startStoryBattle(stage);
+                });
+            }
+
+            storyStageList.appendChild(card);
+        });
+    }
+
+    function startStoryBattle(stage) {
+        currentBattleMode = 'story';
+        currentStoryStage = stage;
+        initBattle();
+        showScreen(screenBattle);
+    }
 
     btnShop.addEventListener('click', () => {
         showMessage(`ショップは準備中です！<br>現在の所持金: <strong>${gameData.money.toLocaleString()}円</strong>`);
@@ -1127,7 +1354,64 @@ document.addEventListener('DOMContentLoaded', () => {
         const maxUnlockedRank = getMaxUnlockedRank();
 
         battleState.enemyTeam = [];
-        if (gameData.isFirstBattle) {
+        if (currentBattleMode === 'story' && currentStoryStage) {
+            // ストーリーモードの敵チーム生成
+            currentStoryStage.enemies.forEach(enemyId => {
+                let enemyChara = null;
+                let enemyLevel = avgPlayerLevel;
+
+                if (typeof storyBossDatabase !== 'undefined' && storyBossDatabase[enemyId]) {
+                    // ボス専用ステータス
+                    const bossInfo = storyBossDatabase[enemyId];
+                    enemyChara = {
+                        id: bossInfo.id,
+                        name: bossInfo.name,
+                        rarity: bossInfo.rarity,
+                        hp: bossInfo.hp,
+                        attack: bossInfo.attack,
+                        ability: bossInfo.ability,
+                        image: bossInfo.image,
+                        isBoss: true
+                    };
+                    enemyLevel = 1; // ボスは固定ステータス
+                } else {
+                    // 通常スライム
+                    const base = characterDatabase.find(c => c.id === enemyId) || characterDatabase[0];
+                    const stats = typeof getSlimeStats === 'function' ? getSlimeStats(base, enemyLevel) : { hp: base.hp, attack: base.attack, level: enemyLevel };
+                    enemyChara = {
+                        ...base,
+                        hp: stats.hp,
+                        attack: stats.attack
+                    };
+                }
+
+                battleState.enemyTeam.push({
+                    ...enemyChara,
+                    level: enemyLevel,
+                    currentHp: enemyChara.hp,
+                    attackCount: 0,
+                    poisonTurns: 0,
+                    burnTurns: 0,
+                    burnDamageCount: 0,
+                    stunTurns: 0,
+                    revived: false,
+                    countered: false,
+                    wallHp: 0,
+                    wallCooldown: 0,
+                    hasSummonedWall: false,
+                    barrierTurns: 0,
+                    barrierReduction: 0,
+                    fighterTurnCount: 0,
+                    isFighterCharged: false,
+                    hasBoostedTeamHp: false,
+                    hammerTurnCount: 0,
+                    screwTurnCount: 0,
+                    originalAttack: enemyChara.attack,
+                    isPlayer: false,
+                    dom: null
+                });
+            });
+        } else if (gameData.isFirstBattle) {
             const base = characterDatabase.find(c => c.id === 'slime_01') || characterDatabase[0];
             const enemyLevel = avgPlayerLevel;
             const stats = typeof getSlimeStats === 'function' ? getSlimeStats(base, enemyLevel) : { hp: base.hp, attack: base.attack, level: enemyLevel };
@@ -1152,6 +1436,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 fighterTurnCount: 0,
                 isFighterCharged: false,
                 hasBoostedTeamHp: false,
+                hammerTurnCount: 0,
+                screwTurnCount: 0,
+                originalAttack: stats.attack,
                 isPlayer: false, 
                 dom: null 
             });
@@ -1511,10 +1798,10 @@ document.addEventListener('DOMContentLoaded', () => {
         typeUntyped.textContent = battleState.currentWord.en.substring(battleState.typedIndex);
     }
 
-    function handleTyping(e) {
+    // タイピング入力の共通処理 (キーボード & スマホオンスクリーンキーボード)
+    function processTypingChar(keyChar) {
         if (!battleState.isActive || !battleState.currentWord) return;
-        
-        const key = e.key.toLowerCase();
+        const key = keyChar.toLowerCase();
         if (key.length !== 1 || !/[a-z\-]/.test(key)) return;
 
         const targetChar = battleState.currentWord.en[battleState.typedIndex];
@@ -1546,11 +1833,33 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    function handleTyping(e) {
+        processTypingChar(e.key);
+    }
+
+    // オンスクリーンキーボードのキーイベント設定
+    if (mobileKeyboardContainer) {
+        mobileKeyboardContainer.querySelectorAll('.kb-key').forEach(btn => {
+            const charKey = btn.dataset.key || btn.textContent.trim().toLowerCase();
+            
+            const pressAction = (e) => {
+                e.preventDefault();
+                btn.classList.add('active');
+                processTypingChar(charKey);
+                setTimeout(() => btn.classList.remove('active'), 120);
+            };
+
+            btn.addEventListener('click', pressAction);
+            btn.addEventListener('touchstart', pressAction, { passive: false });
+        });
+    }
+
     function executeAttack(isPlayerAttacking) {
         if (!battleState.isActive) return;
 
         let attacker = isPlayerAttacking ? battleState.playerTeam[battleState.pIndex] : battleState.enemyTeam[battleState.eIndex];
         let defender = isPlayerAttacking ? battleState.enemyTeam[battleState.eIndex] : battleState.playerTeam[battleState.pIndex];
+        let defenderTeam = isPlayerAttacking ? battleState.enemyTeam : battleState.playerTeam;
 
         attacker.attackCount = (attacker.attackCount || 0) + 1;
         let finalDamage = attacker.attack;
@@ -1569,6 +1878,45 @@ document.addEventListener('DOMContentLoaded', () => {
             attacker.attack = Math.min(30, attacker.attack * 3);
             finalDamage = attacker.attack;
             showAbilityText(attacker.dom, "攻撃力3倍!", currentBattleSpeed);
+        }
+
+        // スクリュースライム (slime_15 / screwslime_boss): 3ターンに1回「捻れ攻撃」(ダメージ2倍+相手を2ターン火状態)
+        if ((attacker.id === 'slime_15' || attacker.id === 'screwslime_boss') && attacker.attackCount % 3 === 0) {
+            finalDamage = attacker.attack * 2;
+            defender.burnTurns = Math.max(defender.burnTurns || 0, 2);
+            showAbilityText(attacker.dom, "🌀捻れ攻撃(2倍+火2T)!", currentBattleSpeed);
+        }
+
+        // ハンマーブレイカー (slime_16 / hammerbreaker_boss): 通常時 / 暴走時(HP7割以下)
+        const isHammerBreaker = (attacker.id === 'slime_16' || attacker.id === 'hammerbreaker_boss');
+        if (isHammerBreaker) {
+            const isEnraged = attacker.currentHp <= (attacker.hp * 0.7);
+            const interval = isEnraged ? (attacker.isBoss ? 2 : 3) : (attacker.isBoss ? 4 : 5);
+            
+            if (attacker.attackCount % interval === 0) {
+                if (isEnraged) {
+                    // 暴走ハンマー乱舞: 相手全体に通常攻撃力/4のダメージ + 自身攻撃力1.1倍 (最大2倍)
+                    const subDmg = Math.round((attacker.originalAttack || attacker.attack) / 4 * 10) / 10;
+                    defenderTeam.forEach(m => {
+                        if (m.currentHp > 0 && m !== defender) {
+                            m.currentHp = Math.max(0, m.currentHp - subDmg);
+                        }
+                    });
+                    const maxAtk = (attacker.originalAttack || attacker.attack) * 2;
+                    attacker.attack = Math.min(maxAtk, Math.round(attacker.attack * 1.1 * 10) / 10);
+                    showAbilityText(attacker.dom, `⚡暴走ハンマー乱舞(全体+攻UP)!`, currentBattleSpeed);
+                } else {
+                    // 通常時: 1.5倍ダメージ + 控え全体に通常攻撃力/4ダメージ
+                    finalDamage = attacker.attack * 1.5;
+                    const subDmg = Math.round((attacker.originalAttack || attacker.attack) / 4 * 10) / 10;
+                    defenderTeam.forEach(m => {
+                        if (m.currentHp > 0 && m !== defender) {
+                            m.currentHp = Math.max(0, m.currentHp - subDmg);
+                        }
+                    });
+                    showAbilityText(attacker.dom, `🔨大ハンマー振り落とし(1.5倍+全体)!`, currentBattleSpeed);
+                }
+            }
         }
 
         // ファイタースライム (slime_14) 溜め攻撃発動 (攻撃力3倍)
@@ -1796,11 +2144,49 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // ========================================================================
-    // バトル終了処理とお金計算
+    // バトル終了処理とお金計算 (対戦 / ストーリー分岐)
     // ========================================================================
     function endBattle(isWin) {
         battleState.isActive = false;
-        
+        document.removeEventListener('keydown', handleTyping);
+
+        if (currentBattleMode === 'story' && currentStoryStage) {
+            // ---- ストーリーモードの終了処理 ----
+            if (isWin) {
+                const stageNum = currentStoryStage.stage;
+                gameData.saveStoryClear(stageNum);
+                const earnedMoney = currentStoryStage.rewardMoney || 0;
+                gameData.addMoney(earnedMoney);
+                moneyController.updateDisplay(gameData.money);
+
+                let rewardSlimeName = "";
+                if (currentStoryStage.rewardSlime) {
+                    const rSlime = characterDatabase.find(c => c.id === currentStoryStage.rewardSlime);
+                    if (rSlime) {
+                        gameData.ownedSlimes.push(rSlime.id);
+                        gameData.saveGameData();
+                        rewardSlimeName = rSlime.name;
+                    }
+                }
+
+                setTimeout(() => {
+                    let msg = `🎉 <strong>ステージ ${stageNum}: ${currentStoryStage.title}</strong> クリア！<br><br>獲得賞金: <strong>+${earnedMoney.toLocaleString()}円</strong><br>現在の所持金: <strong>${gameData.money.toLocaleString()}円</strong>`;
+                    if (rewardSlimeName) {
+                        msg += `<br><br>👑 ボス撃破特別報酬！<br><strong>【${rewardSlimeName}】</strong>が仲間になりました！`;
+                    }
+                    showMessage(msg);
+                    renderStoryStages();
+                    showScreen(screenStoryStages);
+                }, 1000 / currentBattleSpeed);
+            } else {
+                setTimeout(() => {
+                    modalLose.classList.add('active');
+                }, 1000 / currentBattleSpeed);
+            }
+            return;
+        }
+
+        // ---- 対戦モードの終了処理 ----
         let earnedMoney = 0;
         let slimeCount = 0;
         let enemyRaritySum = 0;
@@ -1834,11 +2220,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     btnCloseLose.addEventListener('click', () => {
         modalLose.classList.remove('active');
-        showScreen(screenHome);
+        if (currentBattleMode === 'story') {
+            renderStoryStages();
+            showScreen(screenStoryStages);
+        } else {
+            showScreen(screenHome);
+        }
     });
 
     // ========================================================================
-    // 勝利報酬画面ロジック (獲得金額とお金反映)
+    // 勝利報酬画面ロジック (対戦モード専用: 獲得金額とお金反映)
     // ========================================================================
     function showRewardScreen(earnedMoney, slimeCount, enemyRaritySum) {
         rewardGridContainer.innerHTML = "";

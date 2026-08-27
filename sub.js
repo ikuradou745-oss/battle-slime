@@ -189,8 +189,8 @@ const characterDatabase = [
         id: "slime_11",
         name: "マネースライム",
         rarity: "legend",
-        hp: 16,
-        attack: 2.2,
+        hp: 12,
+        attack: 2.3,
         ability: "黄金のオーラを纏い、強力な打撃とともに戦場を圧倒する",
         image: "./gazou/moneyslime.png"
     },
@@ -220,6 +220,134 @@ const characterDatabase = [
         attack: 2.0,
         ability: "4ターンに1回力を溜めて次の攻撃力3倍(溜め時は行動不可)。HPが8割を切ると受けるダメージを50%軽減。",
         image: "./gazou/fighterslime.png"
+    },
+
+    // --- 5. ボスシリーズ (レアリティ: boss / 紫紺) ※対戦モード敵抽選対象外 ---
+    {
+        id: "slime_15",
+        name: "スクリュースライム",
+        rarity: "boss",
+        hp: 20,
+        attack: 2.0,
+        ability: "3ターンに1回捻れ攻撃を行い2倍ダメージ＋相手を火状態2ターンにする(毎ターン1ダメ)。",
+        image: "./gazou/screwslime.png"
+    },
+    {
+        id: "slime_16",
+        name: "ハンマーブレイカースライム",
+        rarity: "boss",
+        hp: 25,
+        attack: 2.5,
+        ability: "5ターンに1回大ハンマーで1.5倍撃+後列に1/4ダメージ。HP7割以下で暴走し3ターン毎に全体1/4ダメージ+攻撃1.1倍(最大2倍)。",
+        image: "./gazou/hammerbreakerslime.png"
+    }
+];
+
+// ストーリーボス専用マスターデータ
+const storyBossDatabase = {
+    "screwslime_boss": {
+        id: "screwslime_boss",
+        name: "スクリュースライム (BOSS)",
+        rarity: "boss",
+        hp: 45,
+        attack: 3.8,
+        ability: "3ターンに1回捻れ攻撃(2倍ダメージ＋2ターン火状態[毎ターン1ダメ])。",
+        image: "./gazou/screwslime.png"
+    },
+    "hammerbreaker_boss": {
+        id: "hammerbreaker_boss",
+        name: "ハンマーブレイカースライム (BOSS)",
+        rarity: "boss",
+        hp: 55,
+        attack: 4.5,
+        ability: "4ターンに1回大ハンマー(1.5倍+後列1/4)。HP7割以下で暴走し2ターン毎に全体1/4+攻撃1.1倍(最大2倍)。",
+        image: "./gazou/hammerbreakerslime.png"
+    }
+};
+
+// ============================================================================
+// ストーリーモード ステージ構成マスターデータ
+// ============================================================================
+const storyStageData = [
+    {
+        stage: 1,
+        title: "ステージ 1",
+        name: "草原の群れ",
+        rewardMoney: 1000,
+        enemies: ["slime_01", "slime_01", "slime_01", "slime_01"],
+        rewardSlime: null
+    },
+    {
+        stage: 2,
+        title: "ステージ 2",
+        name: "炎と光のデュオ",
+        rewardMoney: 1500,
+        enemies: ["slime_06", "slime_06", "slime_04", "slime_04"],
+        rewardSlime: null
+    },
+    {
+        stage: 3,
+        title: "ステージ 3",
+        name: "剣と盾の陣",
+        rewardMoney: 2000,
+        enemies: ["slime_05", "slime_05", "slime_05", "slime_08"],
+        rewardSlime: null
+    },
+    {
+        stage: 4,
+        title: "ステージ 4",
+        name: "水晶の洞窟",
+        rewardMoney: 2500,
+        enemies: ["slime_10", "slime_10", "slime_10", "slime_10"],
+        rewardSlime: null
+    },
+    {
+        stage: 5,
+        title: "ステージ 5",
+        name: "スライム大行進",
+        rewardMoney: 3000,
+        enemies: ["slime_01", "slime_01", "slime_01", "slime_01", "slime_01", "slime_01", "slime_01", "slime_01"],
+        rewardSlime: null
+    },
+    {
+        stage: 6,
+        title: "ステージ 6",
+        name: "空と拳の猛攻",
+        rewardMoney: 3500,
+        enemies: ["slime_09", "slime_09", "slime_09", "slime_14"],
+        rewardSlime: null
+    },
+    {
+        stage: 7,
+        title: "ステージ 7 (ミニボス)",
+        name: "捻れ荒野の支配者",
+        rewardMoney: 5000,
+        enemies: ["screwslime_boss"],
+        rewardSlime: "slime_15" // スクリュースライム獲得
+    },
+    {
+        stage: 8,
+        title: "ステージ 8",
+        name: "鉄壁のハンマー軍団",
+        rewardMoney: 4000,
+        enemies: ["slime_12", "slime_12", "slime_12", "slime_12", "slime_12", "slime_12", "slime_12", "slime_12"],
+        rewardSlime: null
+    },
+    {
+        stage: 9,
+        title: "ステージ 9",
+        name: "螺旋と闘士の前衛",
+        rewardMoney: 4500,
+        enemies: ["slime_15", "slime_14", "slime_14"],
+        rewardSlime: null
+    },
+    {
+        stage: 10,
+        title: "ステージ 10 (BOSS)",
+        name: "第1章ボス：破壊の鉄槌",
+        rewardMoney: 10000,
+        enemies: ["hammerbreaker_boss"],
+        rewardSlime: "slime_16" // ハンマーブレイカースライム獲得
     }
 ];
 

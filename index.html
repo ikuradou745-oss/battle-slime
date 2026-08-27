@@ -441,6 +441,199 @@
         .rarity-uncommon { background-color: #2ECC71; color: #000; } /* アンコモン (緑色) */
         .rarity-rare { background-color: #3498DB; color: #FFF; } /* レア (青色) */
         .rarity-legend { background-color: #F1C40F; color: #000; } /* レジェンド (黄色) */
+        .rarity-boss { background-color: #8E44AD; color: #FFF; border-color: #5B2C6F; } /* ボスシリーズ (紫紺) */
+
+        /* スマホ用オンスクリーンキーボードスタイル */
+        #mobile-keyboard-container {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 180px;
+            background-color: #2C3E50;
+            border-top: 5px solid #000;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 5px;
+            box-sizing: border-box;
+            z-index: 90;
+            box-shadow: 0 -4px 10px rgba(0,0,0,0.3);
+        }
+
+        body.mobile-mode-on #mobile-keyboard-container {
+            display: flex;
+        }
+
+        body.mobile-mode-on .screen {
+            height: calc(100vh - 180px);
+            top: 0;
+        }
+
+        .kb-row {
+            display: flex;
+            gap: 4px;
+            justify-content: center;
+            width: 100%;
+            max-width: 700px;
+        }
+
+        .kb-key {
+            flex: 1;
+            height: 46px;
+            max-width: 58px;
+            background: #ECF0F1;
+            border: 3px solid #000;
+            border-radius: 6px;
+            font-size: 20px;
+            font-weight: 900;
+            color: #2C3E50;
+            cursor: pointer;
+            box-shadow: 0 4px 0 #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            user-select: none;
+            touch-action: manipulation;
+            transition: transform 0.05s, box-shadow 0.05s;
+        }
+
+        .kb-key:active, .kb-key.active-press {
+            transform: translateY(4px);
+            box-shadow: 0 0 0 #000;
+            background: #F1C40F;
+        }
+
+        /* ストーリーモード画面のスタイル */
+        .story-container {
+            width: 90%;
+            max-width: 900px;
+            height: 85%;
+            background-color: #E8F8F5;
+            border: 6px solid #000;
+            border-radius: 16px;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            box-sizing: border-box;
+            position: relative;
+            box-shadow: 0 8px 0 #000;
+            overflow-y: auto;
+        }
+
+        .chapter-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        .chapter-card {
+            background: #FFF;
+            border: 4px solid #000;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            box-shadow: 0 6px 0 #000;
+            transition: transform 0.1s;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .chapter-card:hover {
+            transform: translateY(-3px);
+        }
+
+        .chapter-card.locked {
+            background: #EAEDED;
+            border-color: #7F8C8D;
+            color: #7F8C8D;
+            box-shadow: 0 4px 0 #7F8C8D;
+        }
+
+        .stage-list-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 15px;
+            width: 100%;
+            margin-top: 15px;
+            overflow-y: auto;
+            padding-bottom: 20px;
+        }
+
+        .stage-card {
+            background: #FFF;
+            border: 4px solid #000;
+            border-radius: 10px;
+            padding: 12px;
+            text-align: center;
+            cursor: pointer;
+            box-shadow: 0 4px 0 #000;
+            transition: transform 0.1s;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            position: relative;
+        }
+
+        .stage-card:hover:not(.locked):not(.cleared) {
+            transform: translateY(-2px);
+            background: #FEF9E7;
+        }
+
+        .stage-card.cleared {
+            background: #D5F5E3;
+            border-color: #27AE60;
+            cursor: default;
+        }
+
+        .stage-card.locked {
+            background: #BDC3C7;
+            border-color: #7F8C8D;
+            color: #7F8C8D;
+            cursor: not-allowed;
+            box-shadow: 0 2px 0 #7F8C8D;
+            opacity: 0.7;
+        }
+
+        .stage-card.boss-stage {
+            border-color: #8E44AD;
+            background: #F4ECF7;
+        }
+
+        /* 敵チームの多数配置 (8体など) の対応 */
+        #battle-enemy-team {
+            max-width: 50%;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: flex-start;
+        }
+
+        #battle-player-team {
+            max-width: 50%;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: flex-end;
+        }
+
+        .team-container.many-members .battle-chara {
+            width: 55px;
+        }
+        .team-container.many-members .battle-chara img {
+            width: 55px;
+            height: 55px;
+        }
+        .team-container.many-members .battle-stats {
+            font-size: 11px;
+            padding: 2px 4px;
+        }
 
         /* バトル画面のスタイル */
         #screen-battle {
@@ -717,6 +910,56 @@
         </div>
     </div>
 
+    <!-- ストーリーモード：章選択画面 -->
+    <div id="screen-story-chapters" class="screen">
+        <div class="story-container">
+            <button class="btn btn-red close-btn" id="btn-close-story-chapters">戻る</button>
+            <div class="section-title">
+                <span>📖 ストーリーモード - 章選択</span>
+            </div>
+            <div class="chapter-grid">
+                <div class="chapter-card" id="btn-chapter-1" style="background: #FEF9E7; border-color: #F1C40F;">
+                    <div style="font-size: 32px;">🏰</div>
+                    <div style="font-size: 24px; font-weight: 900; color: #D35400;">第1章</div>
+                    <div style="font-size: 14px; color: #555;">全10ステージ<br>（ボス：ハンマーブレイカー）</div>
+                    <button class="btn btn-yellow btn-small" style="margin-top: 8px;">挑戦する</button>
+                </div>
+                <div class="chapter-card locked" id="btn-chapter-2">
+                    <div style="font-size: 32px;">🔒</div>
+                    <div style="font-size: 24px; font-weight: 900;">第2章</div>
+                    <div style="font-size: 14px;">（準備中）</div>
+                </div>
+                <div class="chapter-card locked" id="btn-chapter-3">
+                    <div style="font-size: 32px;">🔒</div>
+                    <div style="font-size: 24px; font-weight: 900;">第3章</div>
+                    <div style="font-size: 14px;">（準備中）</div>
+                </div>
+                <div class="chapter-card locked" id="btn-chapter-4">
+                    <div style="font-size: 32px;">🔒</div>
+                    <div style="font-size: 24px; font-weight: 900;">第4章</div>
+                    <div style="font-size: 14px;">（準備中）</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ストーリーモード：第1章ステージ選択画面 -->
+    <div id="screen-story-stages" class="screen">
+        <div class="story-container">
+            <button class="btn btn-red close-btn" id="btn-close-story-stages">章選択へ</button>
+            <div class="section-title">
+                <span>第1章：スライム大平原</span>
+                <span id="story-progress-text" style="font-size: 16px; color: #27AE60;">クリア: 0 / 10</span>
+            </div>
+            <div style="font-size: 13px; color: #555; margin-bottom: 10px; background: #FEF9E7; padding: 6px 10px; border-radius: 6px; border: 2px solid #F1C40F;">
+                💡 ステージは順に攻略します。クリア済みステージの再挑戦はできません。ストーリークリアでは賞金（特定ステージはボススライム）を獲得できます！
+            </div>
+            <div class="stage-list-grid" id="story-stage-list">
+                <!-- ステージカードをJSで生成 -->
+            </div>
+        </div>
+    </div>
+
     <!-- マッチメイキング画面 -->
     <div id="screen-matchmaking" class="screen">
         <h1>相手を探しています...</h1>
@@ -787,9 +1030,21 @@
 
     <!-- 設定モーダル -->
     <div id="modal-settings" class="modal-overlay">
-        <div class="modal-content" style="min-width: 300px;">
+        <div class="modal-content" style="min-width: 320px; max-width: 450px;">
             <h2 style="margin-top: 0;">設定</h2>
             
+            <!-- スマホ操作モード (キーボード表示) の有無設定 -->
+            <div style="background: #FEF9E7; border: 3px solid #F1C40F; border-radius: 8px; padding: 12px; margin-bottom: 15px; text-align: left;">
+                <div style="font-weight: 900; font-size: 16px; margin-bottom: 5px; color: #2C3E50;">📱 スマホ操作 (キーボード)</div>
+                <div style="font-size: 13px; color: #555; margin-bottom: 10px; line-height: 1.4;">
+                    画面下部にタイピング用キーボード（QWERTY配列）を表示してタップで入力できます。
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn btn-small" id="btn-mobile-off" style="flex: 1; background: #2ECC71; color: #000;">無し (OFF)</button>
+                    <button class="btn btn-small" id="btn-mobile-on" style="flex: 1; background: #BDC3C7; color: #555;">有り (ON)</button>
+                </div>
+            </div>
+
             <button class="btn btn-yellow" id="btn-settings-rules" style="padding: 10px 20px; font-size: 18px; width: 100%; margin-bottom: 15px;">📖 ゲーム・対戦ルール</button>
             <button class="btn btn-blue" id="btn-edit-profile" style="padding: 10px 20px; font-size: 18px; width: 100%; margin-bottom: 15px;">プロフィールを変える</button>
             
@@ -950,6 +1205,43 @@
         <div class="modal-content" style="min-width: 250px;">
             <h3 id="message-text" style="line-height: 1.5; margin-bottom: 20px;">メッセージ</h3>
             <button class="btn btn-blue" id="btn-close-message">OK</button>
+        </div>
+    </div>
+
+    <!-- スマホ操作モード用オンスクリーンキーボード (a~z, -) -->
+    <div id="mobile-keyboard-container">
+        <div class="kb-row">
+            <button class="kb-key" data-key="q">Q</button>
+            <button class="kb-key" data-key="w">W</button>
+            <button class="kb-key" data-key="e">E</button>
+            <button class="kb-key" data-key="r">R</button>
+            <button class="kb-key" data-key="t">T</button>
+            <button class="kb-key" data-key="y">Y</button>
+            <button class="kb-key" data-key="u">U</button>
+            <button class="kb-key" data-key="i">I</button>
+            <button class="kb-key" data-key="o">O</button>
+            <button class="kb-key" data-key="p">P</button>
+        </div>
+        <div class="kb-row">
+            <button class="kb-key" data-key="a">A</button>
+            <button class="kb-key" data-key="s">S</button>
+            <button class="kb-key" data-key="d">D</button>
+            <button class="kb-key" data-key="f">F</button>
+            <button class="kb-key" data-key="g">G</button>
+            <button class="kb-key" data-key="h">H</button>
+            <button class="kb-key" data-key="j">J</button>
+            <button class="kb-key" data-key="k">K</button>
+            <button class="kb-key" data-key="l">L</button>
+            <button class="kb-key" data-key="-">-</button>
+        </div>
+        <div class="kb-row">
+            <button class="kb-key" data-key="z">Z</button>
+            <button class="kb-key" data-key="x">X</button>
+            <button class="kb-key" data-key="c">C</button>
+            <button class="kb-key" data-key="v">V</button>
+            <button class="kb-key" data-key="b">B</button>
+            <button class="kb-key" data-key="n">N</button>
+            <button class="kb-key" data-key="m">M</button>
         </div>
     </div>
 
