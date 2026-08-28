@@ -868,9 +868,87 @@
             padding: 12px;
             margin-bottom: 10px;
         }
+
+        /* サービス終了・ガイドライン画面のスタイル */
+        .shutdown-box {
+            background-color: #FFF;
+            border: 5px solid #000;
+            border-radius: 14px;
+            padding: 30px 32px;
+            max-width: 640px;
+            width: 90%;
+            box-sizing: border-box;
+            box-shadow: 0 10px 0 #000;
+            text-align: center;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .shutdown-title {
+            color: #E74C3C;
+            font-size: 32px;
+            font-weight: 900;
+            margin-top: 0;
+            margin-bottom: 20px;
+            text-shadow: 1px 1px 0 #000;
+        }
+        .shutdown-text {
+            color: #000;
+            font-size: 15px;
+            line-height: 1.8;
+            text-align: left;
+            margin-bottom: 16px;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
+
+    <!-- サービス終了画面 (初期表示) -->
+    <div id="screen-service-shutdown" class="screen">
+        <div class="shutdown-box">
+            <h1 class="shutdown-title">サービスを完全終了しました。</h1>
+            <p class="shutdown-text">
+                私はこのようなことをするのはもうやめます。私は運営する力が向いてないと思いました。このようなことをするにはもう少し自分としての技術を高めるといいと思いました。
+            </p>
+            <p class="shutdown-text" style="margin-bottom: 25px;">
+                また、立派な契約違反を自分はしているので、タイピングのサービスを終了します。また利用契約のガイドラインなどを作っておらず、このサイトを利用する人も契約違反を破ってしまったので、自分に責任が来ます。そのような責任を作らないようにするために、私はサービスを完全終了しました
+            </p>
+            <button class="btn btn-yellow" id="btn-to-guidelines" style="font-size: 18px; padding: 12px 24px; width: 100%; max-width: 380px;">
+                （どうしても遊びたいという方向け）
+            </button>
+        </div>
+    </div>
+
+    <!-- ガイドライン＆管理者解除画面 -->
+    <div id="screen-service-guidelines" class="screen">
+        <div class="shutdown-box">
+            <div style="font-size: 20px; font-weight: 900; color: #2C3E50; margin-bottom: 12px;">管理者・利用ガイドライン</div>
+            <p style="font-size: 15px; line-height: 1.7; color: #2C3E50; text-align: left; font-weight: bold; margin-bottom: 15px;">
+                このシステムは主に管理者向け、または家などでやる人のみ教えます。それ以外の人は、しっかりとガイドラインを守って欲しいです。
+            </p>
+            
+            <div style="background-color: #FEF9E7; border: 3px solid #F1C40F; border-radius: 8px; padding: 14px; text-align: left; margin-bottom: 18px;">
+                <div style="font-weight: 900; font-size: 15px; color: #D35400; margin-bottom: 6px;">【ガイドライン】</div>
+                <div style="font-size: 14px; line-height: 1.7; color: #333; font-weight: bold;">
+                    まず家でやること。中毒にならないこと。悪口や自慢は控えめにしましょう。名前を不適切なものにはしないようにしてください。データの悪用などをしてはいけません。
+                </div>
+            </div>
+
+            <div style="margin-bottom: 15px;">
+                <input type="password" id="secret-pass-input" class="custom-input" placeholder="コードを入力" style="width: 80%; max-width: 280px; margin-bottom: 6px; font-size: 18px; letter-spacing: 2px;">
+                <div id="secret-pass-error" style="color: #E74C3C; font-size: 13px; font-weight: bold; min-height: 18px;"></div>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 10px; align-items: center;">
+                <button class="btn btn-green" id="btn-unlock-play" style="font-size: 20px; padding: 12px 30px; width: 100%; max-width: 300px;">
+                    ゲームをプレイ
+                </button>
+                <button class="btn btn-gray btn-small" id="btn-back-shutdown" style="padding: 6px 16px;">
+                    戻る
+                </button>
+            </div>
+        </div>
+    </div>
 
     <!-- 名前入力画面（初回のみ） -->
     <div id="screen-name-input" class="screen">

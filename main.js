@@ -204,6 +204,8 @@ const moneyController = new MoneyDisplayController('money-display');
 
 document.addEventListener('DOMContentLoaded', () => {
     // ---- 画面要素 ----
+    const screenServiceShutdown = document.getElementById('screen-service-shutdown');
+    const screenServiceGuidelines = document.getElementById('screen-service-guidelines');
     const screenNameInput = document.getElementById('screen-name-input');
     const screenHome = document.getElementById('screen-home');
     const screenPlay = document.getElementById('screen-play');
@@ -211,6 +213,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const screenMatchmaking = document.getElementById('screen-matchmaking');
     const screenBattle = document.getElementById('screen-battle');
     
+    // ---- サービス終了・ガイドライン要素 ----
+    const btnToGuidelines = document.getElementById('btn-to-guidelines');
+    const secretPassInput = document.getElementById('secret-pass-input');
+    const secretPassError = document.getElementById('secret-pass-error');
+    const btnUnlockPlay = document.getElementById('btn-unlock-play');
+    const btnBackShutdown = document.getElementById('btn-back-shutdown');
+
     // ---- UI要素 ----
     const inputName = document.getElementById('player-name-input');
     const btnDecideName = document.getElementById('btn-decide-name');
@@ -381,15 +390,72 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    function initGame() {
-        moneyController.updateDisplay(gameData.money);
-        updateMobileModeUI();
-        
+    // サービス終了＆ガイドラインの画面遷移制御
+    if (btnToGuidelines && screenServiceGuidelines) {
+        btnToGuidelines.addEventListener('click', () => {
+            if (secretPassInput) secretPassInput.value = '';
+            if (secretPassError) secretPassError.textContent = '';
+            showScreen(screenServiceGuidelines);
+            if (secretPassInput) secretPassInput.focus();
+        });
+    }
+
+    if (btnBackShutdown && screenServiceShutdown) {
+        btnBackShutdown.addEventListener('click', () => {
+            showScreen(screenServiceShutdown);
+        });
+    }
+
+    function checkAndUnlockGame() {
+        if (!secretPassInput) return;
+        const val = secretPassInput.value.trim().toLowerCase();
+        // 入力パスコード判定 (秘匿検証)
+        const isValid = (btoa(val) === 'dHkxMTEx');
+        if (isValid) {
+            sessionStorage.setItem('is_service_unlocked', 'true');
+            if (secretPassError) secretPassError.textContent = '';
+            enterMainGame();
+        } else {
+            if (secretPassError) {
+                secretPassError.textContent = 'コードが正しくありません。';
+            }
+            secretPassInput.classList.add('damage-shake');
+            setTimeout(() => secretPassInput.classList.remove('damage-shake'), 400);
+        }
+    }
+
+    if (btnUnlockPlay) {
+        btnUnlockPlay.addEventListener('click', checkAndUnlockGame);
+    }
+
+    if (secretPassInput) {
+        secretPassInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                checkAndUnlockGame();
+            }
+        });
+    }
+
+    function enterMainGame() {
         if (gameData.getPlayerName()) {
             updateProfileUI();
             showScreen(screenHome);
         } else {
             showScreen(screenNameInput);
+        }
+    }
+
+    function initGame() {
+        moneyController.updateDisplay(gameData.money);
+        updateMobileModeUI();
+        
+        const isUnlocked = sessionStorage.getItem('is_service_unlocked') === 'true';
+        if (isUnlocked) {
+            enterMainGame();
+        } else if (screenServiceShutdown) {
+            showScreen(screenServiceShutdown);
+        } else {
+            enterMainGame();
         }
     }
 
